@@ -1,5 +1,6 @@
 import re
 import time
+import os
 
 class Wrapper(object):
 
@@ -84,7 +85,7 @@ class GPhoto(Wrapper):
         return stime
 
 
-    def capture_image_and_download(self):
+    def capture_image_and_download(self, shot=None):
         code, out, err = self.call(self._CMD + " --capture-image-and-download --filename '%Y%m%d%H%M%S.jpg'")
         if code != 0:
             raise Exception(err)
@@ -92,6 +93,9 @@ class GPhoto(Wrapper):
         for line in out.split('\n'):
             if line.startswith('Saving file as '):
                 filename = line.split('Saving file as ')[1]
+                filenameWithCnt = "IMG_{:0>5d}.jpg".format(shot)
+                os.rename(filename, filenameWithCnt)
+                filename = filenameWithCnt
 		print "filename: %s" %filename
         return filename
 

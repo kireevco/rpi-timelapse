@@ -4,7 +4,6 @@ from datetime import datetime
 from datetime import timedelta
 import subprocess
 import time
-import os
 import atexit
 
 from wrappers import GPhoto
@@ -85,7 +84,7 @@ def main():
     current_config = 10
     initVal = 14
     current_config = persist.readLastConfig(initVal)
-    shot = 0
+    shot = 1 
     prev_acquired = None
     last_acquired = None
     last_started = None
@@ -105,10 +104,7 @@ def main():
             print "Camera settings done"
             #ui.backlight_off()
             try:
-              filename = camera.capture_image_and_download()
-              filenameWithCnt = "IMG_{:0>5d}.jpg".format(shot)
-              os.rename(filename, filenameWithCnt)
-              filename = filenameWithCnt
+              filename = camera.capture_image_and_download(shot=shot)
             except Exception, e:
               print "Error on capture." + str(e)
               print "Retrying..."
