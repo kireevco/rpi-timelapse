@@ -16,6 +16,7 @@ from ui import TimelapseUi
 MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=30)
 MIN_BRIGHTNESS = 20000
 MAX_BRIGHTNESS = 30000
+IMAGE_DIRECTORY = "DCIM/"
 
 CONFIGS = [(48, "1/1600", 2, 100),
 	   (46, "1/1000", 2, 100),
@@ -104,14 +105,14 @@ def main():
             print "Camera settings done"
             #ui.backlight_off()
             try:
-              filename = camera.capture_image_and_download(shot=shot)
+              filename = camera.capture_image_and_download(shot=shot, image_directory=IMAGE_DIRECTORY)
             except Exception, e:
               print "Error on capture." + str(e)
               print "Retrying..."
               # Occasionally, capture can fail but retries will be successful.
               continue
             prev_acquired = last_acquired
-            brightness = float(idy.mean_brightness(filename))
+            brightness = float(idy.mean_brightness(IMAGE_DIRECTORY+filename))
             last_acquired = datetime.now()
 
             print "-> %s %s" % (filename, brightness)
@@ -133,7 +134,7 @@ def main():
 	print "Error: %s" %(str(e))
 
     def exit_handler():
-        print 'Shooting done!'
+        print 'Shooting aborted!'
 
     #https://docs.python.org/2/library/atexit.html
     atexit.register(exit_handler)
