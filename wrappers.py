@@ -93,7 +93,7 @@ class GPhoto(Wrapper):
         for line in out.split('\n'):
             if line.startswith('Saving file as '):
                 filename = line.split('Saving file as ')[1]
-                filenameWithCnt = "IMG_{:0>5d}.jpg".format(shot)
+                filenameWithCnt = "IMG_{:0>4d}.jpg".format(shot)
                 os.rename(filename, filenameWithCnt)
                 filename = filenameWithCnt
                 if not os.path.exists(image_directory):
