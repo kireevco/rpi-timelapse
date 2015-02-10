@@ -5,6 +5,9 @@ from datetime import timedelta
 import subprocess
 import time
 import atexit
+import os
+import sys
+import shutil
 
 from wrappers import GPhoto
 from wrappers import Identify
@@ -88,6 +91,31 @@ def main():
     settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, SETTINGS_FILE)
     current_config = settings["lastConfig"]
     shot = settings["lastShot"] + 1 
+
+    if (os.path.exists(IMAGE_DIRECTORY) or shot != 1) :
+      quest = raw_input("Wanna continue shooting? (y/n): ")
+
+      if quest=="n":
+          current_config = INIT_CONFIG
+          shot = INIT_SHOT+1
+          print "Starting fresh shooting!"
+          delete = raw_input("Delete settings and all images in folder %s ? (y/n): " % (IMAGE_DIRECTORY))
+          if delete=="y":
+              if os.path.exists(IMAGE_DIRECTORY):
+                shutil.rmtree(IMAGE_DIRECTORY)
+              if os.path.exists(SETTINGS_FILE):
+                os.remove(SETTINGS_FILE)
+              print "Deleted successfully"
+          elif delete=="n":
+              print "Saving in folder: %s " % (IMAGE_DIRECTORY)
+          else:
+              print "Input failure, exiting!"
+              sys.exit()
+      elif quest=="y":
+          print "Continue shooting at shot %s" % (shot)
+      else:
+           print "Input failure, exiting!"
+           sys.exit()
 
     prev_acquired = None
     last_acquired = None
