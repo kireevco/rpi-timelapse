@@ -1,4 +1,11 @@
 import os
+import json
+
+class Settings:
+    def __init__(self,lastConfig,lastShot):
+        self.lastConfig=lastConfig
+        self.lastShot=lastShot
+
 
 class Persist():
 
@@ -10,23 +17,27 @@ class Persist():
 
         # Encapsulate the low-level file descriptor in a python file object
         return os.fdopen(fd, *args, **kwargs)
-
+   
     @staticmethod
-    def readLastConfig(initVal):
-        filename = "settings.cfg"
+    def readLastConfig(initConfig, initShot, filename):
         with Persist.touchopen(filename, "r+") as target:
-            currentConfig = int(target.read() or int(initVal))
-
-            # print "From file %s: %d" % (filename, currentConfig)
-            return currentConfig
-
+            try:
+                settings = json.load(target)
+            except ValueError:
+                settings = {
+                  "lastConfig": initConfig,
+                  "lastShot":   initShot
+                }
+            return settings
+   
     @staticmethod
-    def writeLastConfig(lastConfig):
-        filename = "settings.cfg"
+    def writeLastConfig(lastConfig, initShot, filename):
         with Persist.touchopen(filename, "r+") as target:
-            # print "Writing to file %s: %s" % (filename, lastConfig)
-
+           
+            settings=Settings(lastConfig,initShot)
+            json.dump(vars(settings), target, sort_keys=True, indent=4)
+            #json.dump('settings': [{'lastConfig': lastConfig, 'lastShot': initShot]}, target, sort_keys=True, indent=4)
             # Write the new value and truncate
-            target.seek(0)
-            target.write(str(lastConfig))
+            #target.seek(0)
+            #target.write(str(lastConfig))
             target.truncate()

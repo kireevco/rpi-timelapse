@@ -17,6 +17,9 @@ MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=30)
 MIN_BRIGHTNESS = 20000
 MAX_BRIGHTNESS = 30000
 IMAGE_DIRECTORY = "DCIM/"
+SETTINGS_FILE = "settings.cfg"
+INIT_CONFIG = 10
+INIT_SHOT = 0
 
 CONFIGS = [(48, "1/1600", 2, 100),
 	   (46, "1/1000", 2, 100),
@@ -82,10 +85,10 @@ def main():
     persist = Persist()
     ui = TimelapseUi()
 
-    current_config = 10
-    initVal = 14
-    current_config = persist.readLastConfig(initVal)
-    shot = 1 
+    settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, SETTINGS_FILE)
+    current_config = settings["lastConfig"]
+    shot = settings["lastShot"] + 1 
+
     prev_acquired = None
     last_acquired = None
     last_started = None
@@ -102,7 +105,7 @@ def main():
             #ui.show_status(shot, CONFIGS, current_config)
             camera.set_shutter_speed(secs=config[1])
             camera.set_iso(iso=str(config[3]))
-            print "Camera settings done"
+            #print "Camera settings done"
             #ui.backlight_off()
             try:
               filename = camera.capture_image_and_download(shot=shot, image_directory=IMAGE_DIRECTORY)
@@ -119,10 +122,10 @@ def main():
 
             if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1:
                current_config = current_config + 1
-               persist.writeLastConfig(current_config)
+               persist.writeLastConfig(current_config, shot, SETTINGS_FILE)
             elif brightness > MAX_BRIGHTNESS and current_config > 0:
                current_config = current_config - 1
-               persist.writeLastConfig(current_config)
+               persist.writeLastConfig(current_config, shot, SETTINGS_FILE)
             else:
                 if last_started and last_acquired and last_acquired - last_started < MIN_INTER_SHOT_DELAY_SECONDS:
                     print "Sleeping for %s" % str(MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started))
