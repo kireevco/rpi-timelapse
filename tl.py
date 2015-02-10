@@ -83,7 +83,7 @@ def main():
     print "%s" %model
 
     persist = Persist()
-    ui = TimelapseUi()
+    #ui = TimelapseUi()
 
     settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, SETTINGS_FILE)
     current_config = settings["lastConfig"]
@@ -122,10 +122,10 @@ def main():
 
             if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1:
                current_config = current_config + 1
-               persist.writeLastConfig(current_config, shot, SETTINGS_FILE)
+               persist.writeLastConfig(current_config, shot, brightness, SETTINGS_FILE)
             elif brightness > MAX_BRIGHTNESS and current_config > 0:
                current_config = current_config - 1
-               persist.writeLastConfig(current_config, shot, SETTINGS_FILE)
+               persist.writeLastConfig(current_config, shot, brightness, SETTINGS_FILE)
             else:
                 if last_started and last_acquired and last_acquired - last_started < MIN_INTER_SHOT_DELAY_SECONDS:
                     print "Sleeping for %s" % str(MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started))
