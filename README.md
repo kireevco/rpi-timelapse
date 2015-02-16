@@ -19,6 +19,34 @@ and for `gphoto2` see https://github.com/gonzalo/gphoto2-updater/
 $ wget https://raw.githubusercontent.com/gonzalo/gphoto2-updater/master/gphoto2-updater.sh && chmod +x gphoto2-updater.sh && sudo ./gphoto2-updater.sh
 ```
 
+for the 16x2 character lcd + keypad:
+
+```
+sudo apt-get install i2c-tools
+```
+
+and test the connection with
+
+```
+sudo i2cdetect -y 0 (if you are using a version 1 Raspberry Pi)
+sudo i2cdetect -y 1 (if you are using a version 2 Raspberry Pi)
+```
+
+and install the Adafruit Char LCD library
+
+```
+sudo apt-get install build-essential python-dev python-smbus python-pip git
+sudo pip install RPi.GPIO
+```
+
+and enable the GPIO's with
+
+```
+sudo raspi-config
+```
+
+and follow the instructions in section `A7`
+
 Run
 ---
 
