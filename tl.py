@@ -16,6 +16,22 @@ from wrappers import NetworkInfo
 from config_persist import Persist
 from ui import TimelapseUi
 
+import subprocess
+
+import Adafruit_CharLCD as LCD
+
+
+def showConfig(lcd, current):
+    config = CONFIGS[current]
+    lcd.message("Timelapse\nT: %s ISO: %d" % (config[1], int(config[3])))
+
+def showStatus(lcd, shot, current):
+    config = CONFIGS[current]
+    lcd.message("Shot %d\nT: %s ISO: %d" % (shot, config[1], int(config[3])))
+
+def printToLcd(lcd, message):
+    lcd.message(message)
+
 MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=30)
 MIN_BRIGHTNESS = 20000
 MAX_BRIGHTNESS = 30000
@@ -23,6 +39,8 @@ IMAGE_DIRECTORY = "DCIM/"
 SETTINGS_FILE = "settings.cfg"
 INIT_CONFIG = 10
 INIT_SHOT = 0
+SLEEP_TIME = 3.0
+
 
 CONFIGS = [(48, "1/1600", 2, 100),
 	   (46, "1/1000", 2, 100),
@@ -78,19 +96,48 @@ def main():
     #print "Testing Configs"
     #test_configs()
     print "Timelapse"
+    LCDAttached=True #just to be sure 
     camera = GPhoto(subprocess)
     idy = Identify(subprocess)
     netinfo = NetworkInfo(subprocess)
 
+    # Initialize the LCD using the pins 
+    # see https://learn.adafruit.com/adafruit-16x2-character-lcd-plus-keypad-for-raspberry-pi/usage
+    lcd = LCD.Adafruit_CharLCDPlate()
+    lcd.clear()
+    lcd.set_color(1.0, 1.0, 1.0)
     model = camera.get_model()
     print "%s" %model
 
+    # Check if the LCD panel is connected
+    # sudo apt-get install i2c-tools
+    p = subprocess.Popen('sudo i2cdetect -y 1', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    for line in p.stdout.readlines():
+      if line[0:6] == "20: 20":
+        LCDAttached=True
+    retval = p.wait()
+
     persist = Persist()
-    #ui = TimelapseUi()
+    ui = TimelapseUi()
+
+    if (LCDAttached == True):
+      # color: white
+      lcd.set_color(1.0, 1.0, 1.0)
+      lcd.clear()
+      printToLcd(lcd, model)
+      time.sleep(SLEEP_TIME)
 
     settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, SETTINGS_FILE)
     current_config = settings["lastConfig"]
     shot = settings["lastShot"] + 1 
+
+    #lcd.clear()
+    #showStatus(lcd,shot,current_config)
+    #time.sleep(SLEEP_TIME)
+ 
+    if (LCDAttached == True):
+     lcd.clear()
+     #showConfig(lcd, current_config)
 
     if (os.path.exists(IMAGE_DIRECTORY) or shot != 1) :
       quest = raw_input("Wanna continue shooting? (y/n): ")
@@ -121,20 +168,20 @@ def main():
     last_acquired = None
     last_started = None
 
-    network_status = netinfo.network_status()
-    #current_config = ui.main(CONFIGS, current_config, network_status)
+    if (LCDAttached == True):
+      network_status = netinfo.network_status()
+      print network_status
+      current_config = ui.main(CONFIGS, current_config, network_status)
 
     try:
         while True:
             last_started = datetime.now()
             config = CONFIGS[current_config]
             print "Shot: %d Shutter: %s ISO: %d" % (shot, config[1], config[3])
-            #ui.backlight_on()
-            #ui.show_status(shot, CONFIGS, current_config)
+            showStatus(lcd,shot,current_config)
             camera.set_shutter_speed(secs=config[1])
             camera.set_iso(iso=str(config[3]))
-            #print "Camera settings done"
-            #ui.backlight_off()
+            print "Camera settings done"
             try:
               filename = camera.capture_image_and_download(shot=shot, image_directory=IMAGE_DIRECTORY)
             except Exception, e:
@@ -166,6 +213,9 @@ def main():
 
     def exit_handler():
         print 'Shooting aborted!'
+        lcd.set_color(1.0, 0.0, 0.0)
+        lcd.clear()
+        lcd.message('Upps\nShooting aborted!')
 
     #https://docs.python.org/2/library/atexit.html
     atexit.register(exit_handler)

@@ -1,13 +1,5 @@
 from time import sleep
-try:
-  from Adafruit_I2C import Adafruit_I2C
-  from Adafruit_MCP230xx import Adafruit_MCP230XX
-  from Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
-except ImportError:
-  # This is just to allow the UI to be tested on Linux
-  class Adafruit_CharLCDPlate(object):
-    def __init__(self, busnum):
-        pass
+import Adafruit_CharLCD as LCD
 
 class _GetchUnix:
     def __init__(self):
@@ -56,10 +48,8 @@ class FakeCharLCDPlate(object):
 class TimelapseUi(object):
 
     def __init__(self):
-        self._lcd = Adafruit_CharLCDPlate(busnum = 0)
+        self._lcd = LCD.Adafruit_CharLCDPlate()
         #self._lcd = FakeCharLCDPlate()
-
-        self._lcd.backlight(self._lcd.ON)
 
     def update(self, text):
         self._lcd.clear()
@@ -68,7 +58,7 @@ class TimelapseUi(object):
 
     def show_config(self, configs, current):
         config = configs[current]
-        self.update("Timelapse\nT: %s ISO: %d" % (config[0], config[1]))
+        self.update("Timelapse\nT: %s ISO: %s" % (config[1], config[3]))
 
     def show_status(self, shot, configs, current):
         config = configs[current]
@@ -76,25 +66,18 @@ class TimelapseUi(object):
 
     def show_error(self, text):
         self.update(text[0:16] + "\n" + text[16:])
-        while not self._lcd.buttonPressed(self._lcd.SELECT):
+        while not self._lcd.is_pressed(LCD.SELECT):
             self.backlight_on()
             sleep(1)
             self.backlight_off()
             sleep(1)
         self.backlight_off()
 
-    def backlight_on(self):
-        self._lcd.backlight(self._lcd.ON)
-
-    def backlight_off(self):
-        self._lcd.backlight(self._lcd.OFF)
-
-
     def main(self, configs, current, network_status):
-        self.backlight_on()
         self.update(network_status)
-        while not self._lcd.buttonPressed(self._lcd.SELECT):
-            pass
+
+        while not self._lcd.is_pressed(LCD.SELECT):
+          pass
 
         ready = False
         while not ready:
@@ -104,17 +87,20 @@ class TimelapseUi(object):
                 if (type(self._lcd) == type(FakeCharLCDPlate())):
                     self._lcd.fakeonly_getch()
 
-                if self._lcd.buttonPressed(self._lcd.UP):
+                if self._lcd.is_pressed(LCD.UP):
+                    print "UP"
                     current -= 1
                     if current < 0:
                         current = 0
                     break
-                if self._lcd.buttonPressed(self._lcd.DOWN):
+                if self._lcd.is_pressed(LCD.DOWN):
+                    print "DOWN"
                     current += 1
                     if current >= len(configs):
                         current = len(configs) - 1
                     break
-                if self._lcd.buttonPressed(self._lcd.SELECT):
+                if self._lcd.is_pressed(LCD.SELECT):
+                    print "SELECT"
                     ready = True
                     break
         return current 
