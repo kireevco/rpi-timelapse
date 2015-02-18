@@ -60,9 +60,8 @@ class TimelapseUi(object):
         config = configs[current]
         self.update("Timelapse\nT: %s ISO: %s" % (config[1], config[3]))
 
-    def show_status(self, shot, configs, current):
-        config = configs[current]
-        self.update("Shot %d\nT: %s ISO: %d" % (shot, config[0], config[1]))
+    def show_status(self, shot, config):
+        self.update("Shot %d\nT: %s ISO: %s" % (shot, config[1], config[3]))
 
     def show_error(self, text):
         self.update(text[0:16] + "\n" + text[16:])
