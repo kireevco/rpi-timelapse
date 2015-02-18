@@ -84,17 +84,18 @@ CONFIGS = [(48, "1/1600", 2, 100),
 	   ( 1, "30", 5, 1600)]
 
 def test_configs():
+    print "Testing Configs"
     camera = GPhoto(subprocess)
 
     for config in CONFIGS:
       print "Testing camera setting: Shutter: %s ISO %d" % (config[1], config[3])
       camera.set_shutter_speed(secs=config[1])
       camera.set_iso(iso=str(config[3]))
-      time.sleep(1)
+      time.sleep(SLEEP_TIME)
 
 def main():
-    #print "Testing Configs"
     #test_configs()
+
     print "Timelapse"
     LCDAttached=True #just to be sure 
     camera = GPhoto(subprocess)
@@ -177,11 +178,10 @@ def main():
         while True:
             last_started = datetime.now()
             config = CONFIGS[current_config]
-            print "Shot: %d Shutter: %s ISO: %d" % (shot, config[1], config[3])
-            showStatus(lcd,shot,current_config)
-            camera.set_shutter_speed(secs=config[1])
+            print "Shot %d Shutter: %s ISO: %d" % (shot, config[1], config[3])
+            ui.show_status(shot, config)
+            camera.set_shutter_speed(config[1])
             camera.set_iso(iso=str(config[3]))
-            print "Camera settings done"
             try:
               filename = camera.capture_image_and_download(shot=shot, image_directory=IMAGE_DIRECTORY)
             except Exception, e:
