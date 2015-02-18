@@ -83,6 +83,12 @@ CONFIGS = [(48, "1/1600", 2, 100),
            ( 1, "30", 4, 800),
 	   ( 1, "30", 5, 1600)]
 
+COLOR_RED    = [1.0, 0.0, 0.0]
+COLOR_WHITE  = [1.0, 1.0, 1.0]
+COLOR_BLUE   = [0.0, 0.0, 1.0]
+COLOR_GREEN  = [0.0, 1.0, 0.0]
+COLOR_YELLOW = [1.0, 1.0, 0.0]
+
 def test_configs():
     print "Testing Configs"
     camera = GPhoto(subprocess)
@@ -105,8 +111,15 @@ def main():
     # Initialize the LCD using the pins 
     # see https://learn.adafruit.com/adafruit-16x2-character-lcd-plus-keypad-for-raspberry-pi/usage
     lcd = LCD.Adafruit_CharLCDPlate()
+
+    if camera.is_connected() == False:
+      lcd.set_color(COLOR_RED[0], COLOR_RED[1], COLOR_RED[2])
+      lcd.clear()
+      lcd.message('Error\nNo camera found.')
+      raise Exception("*** Error: No camera found. ***")
+
     lcd.clear()
-    lcd.set_color(1.0, 1.0, 1.0)
+    lcd.set_color(COLOR_WHITE[0], COLOR_WHITE[1], COLOR_WHITE[2])
     model = camera.get_model()
     print "%s" %model
 
@@ -122,8 +135,7 @@ def main():
     ui = TimelapseUi()
 
     if (LCDAttached == True):
-      # color: white
-      lcd.set_color(1.0, 1.0, 1.0)
+      lcd.set_color(COLOR_WHITE[0], COLOR_WHITE[1], COLOR_WHITE[2])
       lcd.clear()
       printToLcd(lcd, model)
       time.sleep(SLEEP_TIME)
@@ -213,7 +225,7 @@ def main():
 
     def exit_handler():
         print 'Shooting aborted!'
-        lcd.set_color(1.0, 0.0, 0.0)
+        lcd.set_color(COLOR_RED[0], COLOR_RED[1], COLOR_RED[2])
         lcd.clear()
         lcd.message('Upps\nShooting aborted!')
 
