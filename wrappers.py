@@ -158,3 +158,9 @@ class GPhoto(Wrapper):
                 model.pop(0)
         return ' '.join(model) 
 
+    def is_connected(self):
+        code, out, err = self.call([self._CMD + " --summary"])
+        if code != 0:
+            return False
+        else:
+            return True
