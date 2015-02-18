@@ -19,7 +19,7 @@ and for `gphoto2` see https://github.com/gonzalo/gphoto2-updater/
 $ wget https://raw.githubusercontent.com/gonzalo/gphoto2-updater/master/gphoto2-updater.sh && chmod +x gphoto2-updater.sh && sudo ./gphoto2-updater.sh
 ```
 
-for the 16x2 character lcd + keypad:
+for the 16x2 character lcd + keypad
 
 ```
 sudo apt-get install i2c-tools
