@@ -112,12 +112,6 @@ class GPhoto(Wrapper):
                 choices[line.split(' ')[2]] = line.split(' ')[1]
             if line.startswith('Current:'):
                 current = line.split(' ')[1]
-        # The following hacks are because gphoto2 lies about eos 350d settings
-        # If you use a different camera you will probably need to remove.
-        #choices["30"] = "30"
-        #choices["10"] = "10"
-        #choices["13"] = "13"
-        #choices["15"] = "15"        
         self._shutter_choices = choices
         return current, choices
 
@@ -126,11 +120,11 @@ class GPhoto(Wrapper):
         if secs:
             if self._shutter_choices == None:
                 self.get_shutter_speeds()
-            code, out, err = self.call([self._CMD + " --set-config /main/capturesettings/shutterspeed=" + str(self._shutter_choices[secs])])
+            code, out, err = self.call([self._CMD + " --set-config /main/capturesettings/shutterspeed=" + str(secs)])
         if index:
             code, out, err = self.call([self._CMD + " --set-config /main/capturesettings/shutterspeed=" + str(index)])
 
-    def get_isos(self):
+    def get_iso(self):
         code, out, err = self.call([self._CMD + " --get-config /main/imgsettings/iso"])
         if code != 0:
             raise Exception(err)
@@ -148,7 +142,7 @@ class GPhoto(Wrapper):
         code, out, err = None, None, None
         if iso:
             if self._iso_choices == None:
-                self.get_isos()
+                self.get_iso()
             code, out, err = self.call([self._CMD + " --set-config /main/imgsettings/iso=" + str(self._iso_choices[iso])])
         if index:
             code, out, err = self.call([self._CMD + " --set-config /main/imgsettings/iso=" + str(index)])
