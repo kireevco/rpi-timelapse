@@ -16,15 +16,22 @@ class Wrapper(object):
             raise Exception(err)
         return p.returncode, out.rstrip(), err.rstrip()
 
+    def call_net(self, cmd):
+        p = self._subprocess.Popen(cmd, shell=True, stdout=self._subprocess.PIPE,
+            stderr=self._subprocess.PIPE)
+        out, err = p.communicate()
+        return p.returncode, out.rstrip(), err.rstrip()
+
+
 class NetworkInfo(Wrapper):
 
     def __init__(self, subprocess):
         Wrapper.__init__(self, subprocess)
 
     def network_status(self):
-        iwcode, iwconfig, err = self.call("iwconfig")
-        wlcode, wlan, err = self.call("ifconfig wlan0")
-        etcode, eth, err = self.call("ifconfig eth0")
+        iwcode, iwconfig, err = self.call_net("iwconfig")
+        wlcode, wlan, err = self.call_net("ifconfig wlan0")
+        etcode, eth, err = self.call_net("ifconfig eth0")
         ssid = None
         wip = None
         eip = None
