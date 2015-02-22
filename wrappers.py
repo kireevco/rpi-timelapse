@@ -11,6 +11,9 @@ class Wrapper(object):
         p = self._subprocess.Popen(cmd, shell=True, stdout=self._subprocess.PIPE,
             stderr=self._subprocess.PIPE)
         out, err = p.communicate()
+        # error handling
+        if p.returncode != 0:
+            raise Exception(err)
         return p.returncode, out.rstrip(), err.rstrip()
 
 class NetworkInfo(Wrapper):
@@ -52,14 +55,10 @@ class Identify(Wrapper):
 
     def summary(self, filepath):
         code, out, err = self.call(self._CMD + " " + filepath)
-        if code != 0:
-            raise Exception(err)
         return out
 
     def mean_brightness(self, filepath):
         code, out, err = self.call(self._CMD + ' -format "%[mean]" ' + filepath)
-        if code != 0:
-            raise Exception(err)
         return out
 
 class GPhoto(Wrapper):
@@ -73,8 +72,6 @@ class GPhoto(Wrapper):
 
     def get_camera_date_time(self):
         code, out, err = self.call(self._CMD + " --get-config /main/settings/datetime")
-        if code != 0:
-            raise Exception(err)
         timestr = None
         for line in out.split('\n'):
             if line.startswith('Current:'):
@@ -87,8 +84,6 @@ class GPhoto(Wrapper):
 
     def capture_image_and_download(self, shot=None, image_directory=None):
         code, out, err = self.call(self._CMD + " --capture-image-and-download --filename '%Y%m%d%H%M%S.jpg'")
-        if code != 0:
-            raise Exception(err)
         filename = None
         for line in out.split('\n'):
             if line.startswith('Saving file as '):
@@ -103,8 +98,6 @@ class GPhoto(Wrapper):
 
     def get_shutter_speeds(self):
         code, out, err = self.call([self._CMD + " --get-config /main/capturesettings/shutterspeed"])
-        if code != 0:
-            raise Exception(err)
         choices = {}
         current = None
         for line in out.split('\n'):
@@ -126,8 +119,6 @@ class GPhoto(Wrapper):
 
     def get_iso(self):
         code, out, err = self.call([self._CMD + " --get-config /main/imgsettings/iso"])
-        if code != 0:
-            raise Exception(err)
         choices = {}
         current = None
         for line in out.split('\n'):
@@ -149,18 +140,9 @@ class GPhoto(Wrapper):
 
     def get_model(self):
 	code, out, err = self.call([self._CMD + " --summary"])
-        if code != 0:
-            raise Exception(err)
         model = {} 
         for line in out.split('\n'):
             if line.startswith('Model:'):
                 model = line.split(' ')
                 model.pop(0)
         return ' '.join(model) 
-
-    def is_connected(self):
-        code, out, err = self.call([self._CMD + " --summary"])
-        if code != 0:
-            return False
-        else:
-            return True

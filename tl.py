@@ -8,6 +8,7 @@ import atexit
 import os
 import sys
 import shutil
+import textwrap
 
 from wrappers import GPhoto
 from wrappers import Identify
@@ -32,6 +33,12 @@ def showStatus(lcd, shot, current):
 def printToLcd(lcd, message):
     lcd.message(message)
 
+def clean_up(lcd, e):
+        lcd.set_color(COLOR_RED[0], COLOR_RED[1], COLOR_RED[2])
+        lcd.clear()
+        lcd.message('\n'.join(textwrap.wrap(str(e), LCD_CHAR_LINE_SIZE)))
+        raise Exception(str(e))
+
 MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=30)
 MIN_BRIGHTNESS = 20000
 MAX_BRIGHTNESS = 30000
@@ -40,7 +47,7 @@ SETTINGS_FILE = "settings.cfg"
 INIT_CONFIG = 10
 INIT_SHOT = 0
 SLEEP_TIME = 3.0
-
+LCD_CHAR_LINE_SIZE = 17
 
 CONFIGS = [(48, "1/1600", 2, 100),
 	   (46, "1/1000", 2, 100),
@@ -111,16 +118,12 @@ def main():
     # Initialize the LCD using the pins 
     # see https://learn.adafruit.com/adafruit-16x2-character-lcd-plus-keypad-for-raspberry-pi/usage
     lcd = LCD.Adafruit_CharLCDPlate()
-
-    if camera.is_connected() == False:
-      lcd.set_color(COLOR_RED[0], COLOR_RED[1], COLOR_RED[2])
-      lcd.clear()
-      lcd.message('Error\nNo camera found.')
-      raise Exception("*** Error: No camera found. ***")
-
     lcd.clear()
     lcd.set_color(COLOR_WHITE[0], COLOR_WHITE[1], COLOR_WHITE[2])
-    model = camera.get_model()
+    try:
+      model = camera.get_model()
+    except Exception, e:
+      clean_up(lcd, e)
     print "%s" %model
 
     # Check if the LCD panel is connected
@@ -192,8 +195,11 @@ def main():
             config = CONFIGS[current_config]
             print "Shot %d Shutter: %s ISO: %d" % (shot, config[1], config[3])
             ui.show_status(shot, config)
-            camera.set_shutter_speed(config[1])
-            camera.set_iso(iso=str(config[3]))
+            try:
+              camera.set_shutter_speed(config[1])
+              camera.set_iso(iso=str(config[3]))
+            except Exception:
+               clean_up(lcd)
             try:
               filename = camera.capture_image_and_download(shot=shot, image_directory=IMAGE_DIRECTORY)
             except Exception, e:
