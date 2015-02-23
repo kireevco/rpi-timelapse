@@ -31,7 +31,7 @@ def showStatus(lcd, shot, current):
     lcd.message("Shot %d\nT: %s ISO: %d" % (shot, config[1], int(config[3])))
 
 def printToLcd(lcd, message):
-    lcd.message(message)
+    lcd.message('\n'.join(textwrap.wrap(message, LCD_CHAR_LINE_SIZE)))
 
 def clean_up(lcd, e):
         lcd.set_color(COLOR_RED[0], COLOR_RED[1], COLOR_RED[2])
@@ -156,13 +156,36 @@ def main():
      #showConfig(lcd, current_config)
 
     if (os.path.exists(IMAGE_DIRECTORY) or shot != 1) :
-      quest = raw_input("Wanna continue shooting? (y/n): ")
+      if (LCDAttached == True):
+        printToLcd(lcd, "Wanna continue shooting?")
+        while True:
+          if lcd.is_pressed(LCD.SELECT):
+            quest = "y"
+            break
+          else:
+            quest = "n"
+            break
+      else:
+        quest = raw_input("Wanna continue shooting? (y/n): ")
 
       if quest=="n":
           current_config = INIT_CONFIG
           shot = INIT_SHOT+1
-          print "Starting fresh shooting!"
-          delete = raw_input("Delete settings and all images in folder %s ? (y/n): " % (IMAGE_DIRECTORY))
+
+          if (LCDAttached == True):
+            lcd.clear()
+            printToLcd(lcd, "Starting fresh shooting!")
+            time.sleep(2)         
+            lcd.clear()
+            printToLcd(lcd, "Delete settings / img?")
+            while True:
+              if lcd.is_pressed(LCD.SELECT):
+                delete = "y"
+                break
+          else:
+            print "Starting fresh shooting!"
+            delete = raw_input("Delete settings and all images in folder %s ? (y/n): " % (IMAGE_DIRECTORY))
+
           if delete=="y":
               if os.path.exists(IMAGE_DIRECTORY):
                 shutil.rmtree(IMAGE_DIRECTORY)
@@ -175,7 +198,11 @@ def main():
               print "Input failure, exiting!"
               sys.exit()
       elif quest=="y":
-          print "Continue shooting at shot %s" % (shot)
+          if (LCDAttached == True):
+            lcd.clear()
+            printToLcd(lcd, "Continue at shot %s" % (shot))
+          else:
+            print "Continue shooting at shot %s" % (shot)
       else:
            print "Input failure, exiting!"
            sys.exit()
@@ -185,15 +212,19 @@ def main():
     last_started = None
 
     if (LCDAttached == True):
+      config = CONFIGS[current_config]
       network_status = netinfo.network_status()
-      print network_status
+      lcd.message(network_status)      
+      time.sleep(2)
+      lcd.clear()
+      lcd.message("Timelapse\nT: %s ISO: %d" % (config[1], config[3]))
       current_config = ui.main(CONFIGS, current_config, network_status)
 
     try:
         while True:
             last_started = datetime.now()
             config = CONFIGS[current_config]
-            print "Shot %d Shutter: %s ISO: %d" % (shot, config[1], config[3])
+            print "Shot %d\nT: %s ISO: %d" % (shot, config[1], config[3])
             ui.show_status(shot, config)
             try:
               camera.set_shutter_speed(config[1])

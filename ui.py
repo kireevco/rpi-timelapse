@@ -73,15 +73,12 @@ class TimelapseUi(object):
         self.backlight_off()
 
     def main(self, configs, current, network_status):
-        self.update(network_status)
 
         while not self._lcd.is_pressed(LCD.SELECT):
           pass
 
         ready = False
         while not ready:
-            self.show_config(configs, current)
-
             while True:
                 if (type(self._lcd) == type(FakeCharLCDPlate())):
                     self._lcd.fakeonly_getch()
@@ -102,7 +99,6 @@ class TimelapseUi(object):
                     print "SELECT"
                     ready = True
                     break
+            self.show_config(configs, current)
         return current 
-
-
 
