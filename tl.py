@@ -142,6 +142,10 @@ def main():
       lcd.clear()
       printToLcd(lcd, model)
       time.sleep(SLEEP_TIME)
+      lcd.clear()
+      network_status = netinfo.network_status()
+      lcd.message(network_status)
+      time.sleep(SLEEP_TIME)
 
     settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, SETTINGS_FILE)
     current_config = settings["lastConfig"]
@@ -159,10 +163,10 @@ def main():
       if (LCDAttached == True):
         printToLcd(lcd, "Wanna continue shooting?")
         while True:
-          if lcd.is_pressed(LCD.SELECT):
+          if lcd.is_pressed(LCD.UP):
             quest = "y"
             break
-          else:
+          elif lcd.is_pressed(LCD.DOWN):
             quest = "n"
             break
       else:
@@ -174,16 +178,19 @@ def main():
 
           if (LCDAttached == True):
             lcd.clear()
-            printToLcd(lcd, "Starting fresh shooting!")
-            time.sleep(2)         
+            printToLcd(lcd, "Starting new shooting!")
+            time.sleep(SLEEP_TIME)         
             lcd.clear()
-            printToLcd(lcd, "Delete settings / img?")
+            printToLcd(lcd, "Wanna delete all files?")
             while True:
-              if lcd.is_pressed(LCD.SELECT):
+              if lcd.is_pressed(LCD.UP):
                 delete = "y"
                 break
+              elif lcd.is_pressed(LCD.DOWN):
+                delete = "n"
+                break
           else:
-            print "Starting fresh shooting!"
+            print "Starting new shooting!"
             delete = raw_input("Delete settings and all images in folder %s ? (y/n): " % (IMAGE_DIRECTORY))
 
           if delete=="y":
@@ -191,9 +198,18 @@ def main():
                 shutil.rmtree(IMAGE_DIRECTORY)
               if os.path.exists(SETTINGS_FILE):
                 os.remove(SETTINGS_FILE)
-              print "Deleted successfully"
+              if (LCDAttached == True):
+                printToLcd(lcd, "Deleted successfully")
+              else:
+                print "Deleted successfully"
           elif delete=="n":
-              print "Saving in folder: %s " % (IMAGE_DIRECTORY)
+              if (LCDAttached == True):
+                lcd.clear()
+                printToLcd(lcd, "Saving in folder: %s " % (IMAGE_DIRECTORY))
+                time.sleep(SLEEP_TIME)
+                lcd.clear()
+              else:
+                print "Saving in folder: %s " % (IMAGE_DIRECTORY)
           else:
               print "Input failure, exiting!"
               sys.exit()
@@ -201,6 +217,8 @@ def main():
           if (LCDAttached == True):
             lcd.clear()
             printToLcd(lcd, "Continue at shot %s" % (shot))
+            time.sleep(SLEEP_TIME)
+            lcd.clear()
           else:
             print "Continue shooting at shot %s" % (shot)
       else:
@@ -213,10 +231,6 @@ def main():
 
     if (LCDAttached == True):
       config = CONFIGS[current_config]
-      network_status = netinfo.network_status()
-      lcd.message(network_status)      
-      time.sleep(2)
-      lcd.clear()
       lcd.message("Timelapse\nT: %s ISO: %d" % (config[1], config[3]))
       current_config = ui.main(CONFIGS, current_config, network_status)
 
@@ -242,7 +256,10 @@ def main():
             brightness = float(idy.mean_brightness(IMAGE_DIRECTORY+filename))
             last_acquired = datetime.now()
 
-            print "-> %s %s" % (filename, brightness)
+            if (LCDAttached == True):
+              printToLcd(lcd, "-> %s %s" % (filename, brightness))
+            else:
+              print "-> %s %s" % (filename, brightness)
 
             if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1:
                current_config = current_config + 1
@@ -261,10 +278,12 @@ def main():
 	print "Error: %s" %(str(e))
 
     def exit_handler():
-        print 'Shooting aborted!'
-        lcd.set_color(COLOR_RED[0], COLOR_RED[1], COLOR_RED[2])
-        lcd.clear()
-        lcd.message('Upps\nShooting aborted!')
+        if (LCDAttached == True):
+          lcd.set_color(COLOR_RED[0], COLOR_RED[1], COLOR_RED[2])
+          lcd.clear()
+          lcd.message('Upps\nShooting aborted!')
+        else:
+          print 'Shooting aborted!'
 
     #https://docs.python.org/2/library/atexit.html
     atexit.register(exit_handler)
