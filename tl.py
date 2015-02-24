@@ -128,6 +128,11 @@ def main():
         LCDAttached=True
     retval = p.wait()
 
+    if (LCDAttached == True):
+      logging.info('LCD attached')
+    else:
+      logging.info('LCD NOT attached')
+
     persist = Persist()
 
     # Initialize the LCD using the pins 
@@ -149,6 +154,7 @@ def main():
     logging.info(model)
 
     if (LCDAttached == True):
+      logging.info('Starting timelapse UI')
       ui = TimelapseUi()
 
       lcd.set_color(COLOR_WHITE[0], COLOR_WHITE[1], COLOR_WHITE[2])
@@ -157,6 +163,7 @@ def main():
       time.sleep(SLEEP_TIME)
       lcd.clear()
       network_status = netinfo.network_status()
+      logging.info(network_status)
       lcd.message(network_status)
       time.sleep(SLEEP_TIME)
 
@@ -164,10 +171,6 @@ def main():
     current_config = settings["lastConfig"]
     shot = settings["lastShot"] + 1 
 
-    #lcd.clear()
-    #showStatus(lcd,shot,current_config)
-    #time.sleep(SLEEP_TIME)
- 
     if (LCDAttached == True):
      lcd.clear()
      #showConfig(lcd, current_config)
@@ -186,12 +189,14 @@ def main():
         quest = raw_input("Wanna continue shooting? (y/n): ")
 
       if quest=="n":
+          logging.info('NOT continue shooting')
           current_config = INIT_CONFIG
           shot = INIT_SHOT+1
 
           if (LCDAttached == True):
             lcd.clear()
             printToLcd(lcd, "Starting new shooting!")
+            logging.info('Starting new shooting!')
             time.sleep(SLEEP_TIME)         
             lcd.clear()
             printToLcd(lcd, "Wanna delete all files?")
@@ -212,10 +217,12 @@ def main():
               if os.path.exists(SETTINGS_FILE):
                 os.remove(SETTINGS_FILE)
               if (LCDAttached == True):
-                printToLcd(lcd, "Deleted successfully")
+                printToLcd(lcd, 'Deleted successfully')
+                logging.info('Deleted successfully')
               else:
                 logging.info('Deleted successfully')
           elif delete=="n":
+              logging.info("Saving in folder: %s " % (IMAGE_DIRECTORY))
               if (LCDAttached == True):
                 lcd.clear()
                 printToLcd(lcd, "Saving in folder: %s " % (IMAGE_DIRECTORY))
@@ -228,11 +235,13 @@ def main():
       elif quest=="y":
           if (LCDAttached == True):
             lcd.clear()
-            printToLcd(lcd, "Continue at shot %s" % (shot))
+            printToLcd(lcd, "Continue with shot %s" % (shot))
+            logging.info('Continue shooting with shot %s' % (shot))
             time.sleep(SLEEP_TIME)
             lcd.clear()
           else:
-            print "Continue shooting at shot %s" % (shot)
+            logging.info('Continue shooting with shot %s' % (shot))
+            print "Continue shooting with shot %s" % (shot)
       else:
            raise Exception("Input failure, exiting!")
 
@@ -242,6 +251,7 @@ def main():
 
     if (LCDAttached == True):
       config = CONFIGS[current_config]
+      logging.info("Inital setting: T: %s ISO: %d" % (config[1], config[3]))
       lcd.message("Timelapse\nT: %s ISO: %d" % (config[1], config[3]))
       current_config = ui.main(CONFIGS, current_config, network_status)
 
@@ -249,10 +259,11 @@ def main():
         while True:
             last_started = datetime.now()
             config = CONFIGS[current_config]
+            logging.info("Shot: %d T: %s ISO: %d" % (shot, config[1], config[3]))
             if (LCDAttached == True):
               ui.show_status(shot, config)
             else:
-              print "Shot %d\nT: %s ISO: %d" % (shot, config[1], config[3])
+              print "Shot: %d T: %s ISO: %d" % (shot, config[1], config[3])
             try:
               camera.set_shutter_speed(config[1])
               camera.set_iso(iso=str(config[3]))
@@ -262,6 +273,7 @@ def main():
             try:
               filename = camera.capture_image_and_download(shot=shot, image_directory=IMAGE_DIRECTORY)
             except Exception, e:
+              logging.error("Error on capture." + str(e))
               print "Error on capture." + str(e)
               print "Retrying..."
               # Occasionally, capture can fail but retries will be successful.
@@ -270,11 +282,12 @@ def main():
             brightness = float(idy.mean_brightness(IMAGE_DIRECTORY+filename))
             last_acquired = datetime.now()
 
+            logging.info("Shot: %d File: %s Brightness: %s" % (shot, filename, brightness))
             if (LCDAttached == True):
               lcd.clear()
-              printToLcd(lcd, "-> %s %s" % (filename, brightness))
+              printToLcd(lcd, "Shot: %d File: %s Brightness: %s" % (shot, filename, brightness))
             else:
-              print "-> %s %s" % (filename, brightness)
+              print "Shot: %d File: %s Brightness: %s" % (shot, filename, brightness)
 
             if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1:
                current_config = current_config + 1
@@ -284,6 +297,7 @@ def main():
                persist.writeLastConfig(current_config, shot, brightness, SETTINGS_FILE)
             else:
                 if last_started and last_acquired and last_acquired - last_started < MIN_INTER_SHOT_DELAY_SECONDS:
+                    logging.info("Sleeping for %s" % str(MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started)))
                     print "Sleeping for %s" % str(MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started))
 
                     time.sleep((MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started)).seconds)
