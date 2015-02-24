@@ -18,6 +18,7 @@ from config_persist import Persist
 from ui import TimelapseUi
 
 import subprocess
+import logging
 
 import Adafruit_CharLCD as LCD
 
@@ -34,6 +35,8 @@ def printToLcd(lcd, message):
     lcd.message('\n'.join(textwrap.wrap(message, LCD_CHAR_LINE_SIZE)))
 
 def clean_up(lcd, e):
+        logging.error(str(e))
+        logging.info(e)
         lcd.set_color(COLOR_RED[0], COLOR_RED[1], COLOR_RED[2])
         lcd.clear()
         lcd.message('\n'.join(textwrap.wrap(str(e), LCD_CHAR_LINE_SIZE)))
@@ -109,22 +112,14 @@ def test_configs():
 def main():
     #test_configs()
 
+    logging.basicConfig(filename='timelapse.log', level=logging.INFO, format='%(asctime)s %(message)s')
+    logging.info('Started Timelapse')
+
     print "Timelapse"
-    LCDAttached=True #just to be sure 
+    LCDAttached=False #just to be sure 
     camera = GPhoto(subprocess)
     idy = Identify(subprocess)
     netinfo = NetworkInfo(subprocess)
-
-    # Initialize the LCD using the pins 
-    # see https://learn.adafruit.com/adafruit-16x2-character-lcd-plus-keypad-for-raspberry-pi/usage
-    lcd = LCD.Adafruit_CharLCDPlate()
-    lcd.clear()
-    lcd.set_color(COLOR_WHITE[0], COLOR_WHITE[1], COLOR_WHITE[2])
-    try:
-      model = camera.get_model()
-    except Exception, e:
-      clean_up(lcd, e)
-    print "%s" %model
 
     # Check if the LCD panel is connected
     # sudo apt-get install i2c-tools
@@ -135,9 +130,28 @@ def main():
     retval = p.wait()
 
     persist = Persist()
-    ui = TimelapseUi()
+
+    # Initialize the LCD using the pins 
+    # see https://learn.adafruit.com/adafruit-16x2-character-lcd-plus-keypad-for-raspberry-pi/usage
+    if (LCDAttached == True):
+      lcd = LCD.Adafruit_CharLCDPlate()
+      lcd.clear()
+      lcd.set_color(COLOR_WHITE[0], COLOR_WHITE[1], COLOR_WHITE[2])
+   
+    model = "undef" 
+    try:
+      model = camera.get_model()
+    except Exception, e:
+      if (LCDAttached == True):
+        clean_up(lcd, e)
+      else:
+        raise Exception(str(e))
+
+    print "%s" %model
 
     if (LCDAttached == True):
+      ui = TimelapseUi()
+
       lcd.set_color(COLOR_WHITE[0], COLOR_WHITE[1], COLOR_WHITE[2])
       lcd.clear()
       printToLcd(lcd, model)
@@ -238,13 +252,16 @@ def main():
         while True:
             last_started = datetime.now()
             config = CONFIGS[current_config]
-            print "Shot %d\nT: %s ISO: %d" % (shot, config[1], config[3])
-            ui.show_status(shot, config)
+            if (LCDAttached == True):
+              ui.show_status(shot, config)
+            else:
+              print "Shot %d\nT: %s ISO: %d" % (shot, config[1], config[3])
             try:
               camera.set_shutter_speed(config[1])
               camera.set_iso(iso=str(config[3]))
             except Exception:
-               clean_up(lcd)
+               if (LCDAttached == True):
+                 clean_up(lcd)
             try:
               filename = camera.capture_image_and_download(shot=shot, image_directory=IMAGE_DIRECTORY)
             except Exception, e:
