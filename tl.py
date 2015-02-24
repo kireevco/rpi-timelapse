@@ -115,7 +115,6 @@ def main():
     logging.basicConfig(filename='timelapse.log', level=logging.INFO, format='%(asctime)s %(message)s')
     logging.info('Started Timelapse')
 
-    print "Timelapse"
     LCDAttached=False #just to be sure 
     camera = GPhoto(subprocess)
     idy = Identify(subprocess)
@@ -147,7 +146,7 @@ def main():
       else:
         raise Exception(str(e))
 
-    print "%s" %model
+    logging.info(model)
 
     if (LCDAttached == True):
       ui = TimelapseUi()
@@ -204,7 +203,7 @@ def main():
                 delete = "n"
                 break
           else:
-            print "Starting new shooting!"
+            logging.info('Starting new shooting!')
             delete = raw_input("Delete settings and all images in folder %s ? (y/n): " % (IMAGE_DIRECTORY))
 
           if delete=="y":
@@ -215,7 +214,7 @@ def main():
               if (LCDAttached == True):
                 printToLcd(lcd, "Deleted successfully")
               else:
-                print "Deleted successfully"
+                logging.info('Deleted successfully')
           elif delete=="n":
               if (LCDAttached == True):
                 lcd.clear()
@@ -225,8 +224,7 @@ def main():
               else:
                 print "Saving in folder: %s " % (IMAGE_DIRECTORY)
           else:
-              print "Input failure, exiting!"
-              sys.exit()
+              raise Exception("Input failure, exiting!")
       elif quest=="y":
           if (LCDAttached == True):
             lcd.clear()
@@ -236,8 +234,7 @@ def main():
           else:
             print "Continue shooting at shot %s" % (shot)
       else:
-           print "Input failure, exiting!"
-           sys.exit()
+           raise Exception("Input failure, exiting!")
 
     prev_acquired = None
     last_acquired = None
@@ -259,9 +256,9 @@ def main():
             try:
               camera.set_shutter_speed(config[1])
               camera.set_iso(iso=str(config[3]))
-            except Exception:
+            except Exception, e:
                if (LCDAttached == True):
-                 clean_up(lcd)
+                 clean_up(lcd, e)
             try:
               filename = camera.capture_image_and_download(shot=shot, image_directory=IMAGE_DIRECTORY)
             except Exception, e:
@@ -274,6 +271,7 @@ def main():
             last_acquired = datetime.now()
 
             if (LCDAttached == True):
+              lcd.clear()
               printToLcd(lcd, "-> %s %s" % (filename, brightness))
             else:
               print "-> %s %s" % (filename, brightness)
