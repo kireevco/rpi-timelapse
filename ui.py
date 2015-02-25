@@ -1,5 +1,5 @@
 from time import sleep
-import Adafruit_CharLCD as LCD
+from Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
 
 class _GetchUnix:
     def __init__(self):
@@ -48,7 +48,7 @@ class FakeCharLCDPlate(object):
 class TimelapseUi(object):
 
     def __init__(self):
-        self._lcd = LCD.Adafruit_CharLCDPlate()
+        self._lcd = Adafruit_CharLCDPlate()
         #self._lcd = FakeCharLCDPlate()
 
     def update(self, text):
@@ -65,16 +65,13 @@ class TimelapseUi(object):
 
     def show_error(self, text):
         self.update(text[0:16] + "\n" + text[16:])
-        while not self._lcd.is_pressed(LCD.SELECT):
-            self.backlight_on()
+        while not self._lcd.buttonPressed(self._lcd.SELECT):
+            sself.backlight(self._lcd.RED)
             sleep(1)
-            self.backlight_off()
-            sleep(1)
-        self.backlight_off()
 
     def main(self, configs, current, network_status):
 
-        while not self._lcd.is_pressed(LCD.SELECT):
+        while not self._lcd.buttonPressed(self._lcd.SELECT):
           pass
 
         ready = False
@@ -83,22 +80,23 @@ class TimelapseUi(object):
                 if (type(self._lcd) == type(FakeCharLCDPlate())):
                     self._lcd.fakeonly_getch()
 
-                if self._lcd.is_pressed(LCD.UP):
+                if self._lcd.buttonPressed(self._lcd.UP):
                     print "UP"
                     current -= 1
                     if current < 0:
                         current = 0
                     break
-                if self._lcd.is_pressed(LCD.DOWN):
+                if self._lcd.buttonPressed(self._lcd.DOWN):
                     print "DOWN"
                     current += 1
                     if current >= len(configs):
                         current = len(configs) - 1
                     break
-                if self._lcd.is_pressed(LCD.SELECT):
+                if self._lcd.buttonPressed(self._lcd.SELECT):
                     print "SELECT"
                     ready = True
                     break
+            print "end"
             self.show_config(configs, current)
         return current 
 

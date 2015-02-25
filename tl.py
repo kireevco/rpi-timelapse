@@ -20,7 +20,7 @@ from ui import TimelapseUi
 import subprocess
 import logging
 
-import Adafruit_CharLCD as LCD
+from Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
 
 
 def showConfig(lcd, current):
@@ -34,13 +34,35 @@ def showStatus(lcd, shot, current):
 def printToLcd(lcd, message):
     lcd.message('\n'.join(textwrap.wrap(message, LCD_CHAR_LINE_SIZE)))
 
-def clean_up(lcd, e):
+def cleanUp(lcd, e):
         logging.error(str(e))
         logging.info(e)
-        lcd.set_color(COLOR_RED[0], COLOR_RED[1], COLOR_RED[2])
+        lcd.backlight(lcd.RED) 
         lcd.clear()
         lcd.message('\n'.join(textwrap.wrap(str(e), LCD_CHAR_LINE_SIZE)))
+        print str(e)
         raise Exception(str(e))
+
+def chooseSetting(lcd, configs, current):
+  ready = False
+  while not ready:
+      while True:
+        if lcd.buttonPressed(lcd.UP):
+	  current -= 1
+	if current < 0:
+	  current = 0
+	  break
+	if lcd.buttonPressed(lcd.DOWN):
+	  current += 1
+	if current >= len(configs):
+	  current = len(configs) - 1
+	  break
+	if lcd.buttonPressed(lcd.SELECT):
+	  ready = True
+	  break
+      config = configs[current]
+      printToLcd(lcd, "Timelapse\nT: %s ISO: %s" % (config[1], config[3]))
+  return current
 
 MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=30)
 MIN_BRIGHTNESS = 20000
@@ -93,11 +115,6 @@ CONFIGS = [(48, "1/1600", 2, 100),
            ( 1, "30", 4, 800),
 	   ( 1, "30", 5, 1600)]
 
-COLOR_RED    = [1.0, 0.0, 0.0]
-COLOR_WHITE  = [1.0, 1.0, 1.0]
-COLOR_BLUE   = [0.0, 0.0, 1.0]
-COLOR_GREEN  = [0.0, 1.0, 0.0]
-COLOR_YELLOW = [1.0, 1.0, 0.0]
 
 def test_configs():
     print "Testing Configs"
@@ -112,7 +129,7 @@ def test_configs():
 def main():
     #test_configs()
 
-    logging.basicConfig(filename='timelapse.log', level=logging.INFO, format='%(asctime)s %(message)s')
+    logging.basicConfig(filename='%s/timelapse.log' % os.path.dirname(os.path.realpath(__file__)), level=logging.INFO, format='%(asctime)s %(message)s')
     logging.info('Started Timelapse')
 
     LCDAttached=False #just to be sure 
@@ -138,16 +155,16 @@ def main():
     # Initialize the LCD using the pins 
     # see https://learn.adafruit.com/adafruit-16x2-character-lcd-plus-keypad-for-raspberry-pi/usage
     if (LCDAttached == True):
-      lcd = LCD.Adafruit_CharLCDPlate()
+      lcd = Adafruit_CharLCDPlate()
       lcd.clear()
-      lcd.set_color(COLOR_WHITE[0], COLOR_WHITE[1], COLOR_WHITE[2])
-   
+      lcd.backlight(lcd.TEAL)
+  
     model = "undef" 
     try:
       model = camera.get_model()
     except Exception, e:
       if (LCDAttached == True):
-        clean_up(lcd, e)
+        cleanUp(lcd, e)
       else:
         raise Exception(str(e))
 
@@ -157,7 +174,7 @@ def main():
       logging.info('Starting timelapse UI')
       ui = TimelapseUi()
 
-      lcd.set_color(COLOR_WHITE[0], COLOR_WHITE[1], COLOR_WHITE[2])
+      lcd.backlight(lcd.TEAL) 
       lcd.clear()
       printToLcd(lcd, model)
       time.sleep(SLEEP_TIME)
@@ -179,10 +196,10 @@ def main():
       if (LCDAttached == True):
         printToLcd(lcd, "Wanna continue shooting?")
         while True:
-          if lcd.is_pressed(LCD.UP):
+          if lcd.buttonPressed(lcd.UP):
             quest = "y"
             break
-          elif lcd.is_pressed(LCD.DOWN):
+          elif lcd.buttonPressed(lcd.DOWN):
             quest = "n"
             break
       else:
@@ -201,10 +218,10 @@ def main():
             lcd.clear()
             printToLcd(lcd, "Wanna delete all files?")
             while True:
-              if lcd.is_pressed(LCD.UP):
+              if lcd.buttonPressed(lcd.UP):
                 delete = "y"
                 break
-              elif lcd.is_pressed(LCD.DOWN):
+              elif lcd.buttonPressed(lcd.DOWN):
                 delete = "n"
                 break
           else:
@@ -253,8 +270,8 @@ def main():
       config = CONFIGS[current_config]
       logging.info("Inital setting: T: %s ISO: %d" % (config[1], config[3]))
       lcd.message("Timelapse\nT: %s ISO: %d" % (config[1], config[3]))
-      current_config = ui.main(CONFIGS, current_config, network_status)
-
+      #current_config = ui.main(CONFIGS, current_config, network_status)
+      current_config = chooseSetting(lcd, CONFIGS, current_config)
     try:
         while True:
             last_started = datetime.now()
@@ -269,7 +286,7 @@ def main():
               camera.set_iso(iso=str(config[3]))
             except Exception, e:
                if (LCDAttached == True):
-                 clean_up(lcd, e)
+                 cleanUp(lcd, e)
             try:
               filename = camera.capture_image_and_download(shot=shot, image_directory=IMAGE_DIRECTORY)
             except Exception, e:
@@ -308,7 +325,7 @@ def main():
 
     def exit_handler():
         if (LCDAttached == True):
-          lcd.set_color(COLOR_RED[0], COLOR_RED[1], COLOR_RED[2])
+          lcd.backlight(lcd.RED) 
           lcd.clear()
           lcd.message('Upps\nShooting aborted!')
         else:
