@@ -73,7 +73,7 @@ class GPhoto(Wrapper):
 
     def __init__(self, subprocess):
         Wrapper.__init__(self, subprocess)
-        self._CMD = 'gphoto2'
+        self._CMD = '/usr/local/bin/gphoto2'
         self._shutter_choices = None
         self._iso_choices = None
 
