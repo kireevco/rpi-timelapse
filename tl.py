@@ -21,7 +21,7 @@ import subprocess
 import logging
 
 from Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
-
+from lcdScroll import Scroller
 
 def showConfig(lcd, current):
     config = CONFIGS[current]
@@ -34,13 +34,41 @@ def showStatus(lcd, shot, current):
 def printToLcd(lcd, message):
     lcd.message('\n'.join(textwrap.wrap(message, LCD_CHAR_LINE_SIZE)))
 
+def stop(lcd, mode):
+    lcd.clear()
+    lcd.message("Goodbye!")
+    # flashy ending!
+    for i in range(3):
+      for col in (lcd.YELLOW, lcd.GREEN, lcd.TEAL, lcd.BLUE, lcd.VIOLET, lcd.WHITE, lcd.RED):
+        lcd.backlight(col)
+        time.sleep(.05)
+    time.sleep(SLEEP_TIME)
+    lcd.backlight(lcd.OFF)
+    lcd.noDisplay()
+    if mode == "exit":
+      return 0    
+    if mode == "shutdown":
+      os.system("sudo shutdown -h now")
+
 def cleanUp(lcd, e):
         logging.error(str(e))
         logging.info(e)
         lcd.backlight(lcd.RED) 
         lcd.clear()
-        lcd.message('\n'.join(textwrap.wrap(str(e), LCD_CHAR_LINE_SIZE)))
+        lines=[str(e)]
+	displayScroll = Scroller(lines=lines)
+        message = displayScroll.scroll()
+        lcd.message(message)
+        lcd.speed = .5
         print str(e)
+        while True:
+          # sel = 1, r = 2, d = 4, u = 8, l = 16
+          if lcd.buttonPressed(lcd.UP): 
+            stop(lcd, 'exit')
+          lcd.clear()
+          scrolled = displayScroll.scroll()
+          lcd.message(scrolled)
+          time.sleep(lcd.speed)
         raise Exception(str(e))
 
 def chooseSetting(lcd, configs, current):
@@ -64,6 +92,7 @@ def chooseSetting(lcd, configs, current):
       printToLcd(lcd, "Timelapse\nT: %s ISO: %s" % (config[1], config[3]))
   return current
 
+__version__ = "1.0"
 MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=30)
 MIN_BRIGHTNESS = 20000
 MAX_BRIGHTNESS = 30000
@@ -126,11 +155,15 @@ def test_configs():
       camera.set_iso(iso=str(config[3]))
       time.sleep(SLEEP_TIME)
 
+    lcd = Adafruit_CharLCDPlate()
+    lcd.clear()
+    lcd.backlight(lcd.TEAL)
+
 def main():
     #test_configs()
 
     logging.basicConfig(filename='%s/timelapse.log' % os.path.dirname(os.path.realpath(__file__)), level=logging.INFO, format='%(asctime)s %(message)s')
-    logging.info('Started Timelapse')
+    logging.info('Started %s' % __file__)
 
     LCDAttached=False #just to be sure 
     camera = GPhoto(subprocess)
@@ -158,7 +191,10 @@ def main():
       lcd = Adafruit_CharLCDPlate()
       lcd.clear()
       lcd.backlight(lcd.TEAL)
-  
+      lcd.message("Timelapse\nVersion %s"%__version__)
+      logging.info("Timelapse Version %s"%__version__)
+      time.sleep(SLEEP_TIME)
+
     model = "undef" 
     try:
       model = camera.get_model()
@@ -171,9 +207,6 @@ def main():
     logging.info(model)
 
     if (LCDAttached == True):
-      logging.info('Starting timelapse UI')
-      ui = TimelapseUi()
-
       lcd.backlight(lcd.TEAL) 
       lcd.clear()
       printToLcd(lcd, model)
