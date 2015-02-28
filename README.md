@@ -25,18 +25,11 @@ for the 16x2 character lcd + keypad
 sudo apt-get install i2c-tools
 ```
 
-and test the connection with
+test the connection with
 
 ```
 sudo i2cdetect -y 0 (if you are using a version 1 Raspberry Pi)
 sudo i2cdetect -y 1 (if you are using a version 2 Raspberry Pi)
-```
-
-and install the Adafruit Char LCD library
-
-```
-sudo apt-get install build-essential python-dev python-smbus python-pip git
-sudo pip install RPi.GPIO
 ```
 
 and enable the GPIO's with
@@ -67,7 +60,7 @@ Remove flicker if timelapse used many shutter values
 ----------------------------------------------------
 
 ```
-for a in *; do echo $a;/opt/ImageMagick/bin/mogrify -auto-gamma $a;done
+for a in *; do echo $a;/usr/bin/mogrify -auto-gamma $a;done
 ```
 
 Be careful with `auto-gamma` - it works extremely well for sunset / sunrise but can make very dark areas of the scene very noisy.
@@ -76,7 +69,7 @@ Convert the resulting JPEGs to a timelapse movie
 ------------------------------------------------
 
 ```
-ffmpeg -r 18 -q:v 2 -start_number XXXX -i /tmp/timelapse/IMG_%d.JPG output.mp4
+ffmpeg -r 18 -q:v 2 -start_number XXXX -i IMG_%d.JPG output.mp4
 ```
 
 
