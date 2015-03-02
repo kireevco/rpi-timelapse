@@ -8,7 +8,6 @@ import smbus
 
 
 # initialize the LCD plate
-# use busnum = 0 for raspi version 1 (256MB) and busnum = 1 for version 2
 lcd = Adafruit_CharLCDPlate()
 
 # clear display
