@@ -34,6 +34,7 @@ INIT_SHOT = 0
 SLEEP_TIME = 1
 LCD_CHAR_LINE_SIZE = 17
 
+# Canon camera shutter settings
 CONFIGS = [(48, "1/1600", 2, 100),
     (46, "1/1000", 2, 100),
     (45, "1/800", 2, 100),
@@ -105,7 +106,6 @@ class App(Adafruit_CharLCDPlate):
           self.message("Timelapse\nVersion %s"%__version__)
         time.sleep(SLEEP_TIME)
 
-        self.checkPanel()
         self.getNetwork()
         self.getModel()
 
