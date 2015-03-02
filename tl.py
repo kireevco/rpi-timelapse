@@ -91,8 +91,6 @@ class App(Adafruit_CharLCDPlate):
         self.netinfo = NetworkInfo(subprocess)
         self.shot = 0
 
-        # Just to be sure
-        self.LCDAttached = False
         self.displaySet = False
 
     def startup(self):
