@@ -80,9 +80,11 @@ CONFIGS = [(48, "1/1600", 2, 100),
 class App(Adafruit_CharLCDPlate):
 
     def __init__(self):
+        self.LCDAttached = self.checkPanel()
         # Initialize the LCD using the pins
         # see https://learn.adafruit.com/adafruit-16x2-character-lcd-plus-keypad-for-raspberry-pi/usage
-        Adafruit_CharLCDPlate.__init__(self)
+        if (self.LCDAttached == True):
+          Adafruit_CharLCDPlate.__init__(self)
         self.camera = GPhoto(subprocess)
         self.idy = Identify(subprocess)
         self.netinfo = NetworkInfo(subprocess)
@@ -93,12 +95,14 @@ class App(Adafruit_CharLCDPlate):
         self.displaySet = False
 
     def startup(self):
-        self.clear()
-        self.backlight(self.WHITE)
+        if (self.LCDAttached == True):
+          self.clear()
+          self.backlight(self.WHITE)
         logging.basicConfig(filename='%s/timelapse.log' % os.path.dirname(os.path.realpath(__file__)), level=logging.INFO, format='%(asctime)s %(message)s')
         logging.info('Started %s' % __file__)
         logging.info("Timelapse Version %s"%__version__)
-        self.message("Timelapse\nVersion %s"%__version__)
+        if (self.LCDAttached == True):
+          self.message("Timelapse\nVersion %s"%__version__)
         time.sleep(SLEEP_TIME)
 
         self.checkPanel()
@@ -123,10 +127,10 @@ class App(Adafruit_CharLCDPlate):
         self.message('\n'.join(textwrap.wrap(message, LCD_CHAR_LINE_SIZE)))
 
     def getNetwork(self):
+        network_status = self.netinfo.network_status()
         if (self.LCDAttached == True):
             self.backlight(self.TEAL)
             self.clear()
-            network_status = self.netinfo.network_status()
             self.message(network_status)
             time.sleep(SLEEP_TIME)
         logging.info(network_status)
@@ -214,20 +218,21 @@ class App(Adafruit_CharLCDPlate):
 
     def checkPanel(self):
 
+        LCDAttached = False
         # Check if the LCD panel is connected
         # sudo apt-get install i2c-tools
         p = subprocess.Popen('sudo i2cdetect -y 1', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         for line in p.stdout.readlines():
             if line[0:6] == "20: 20":
-                self.LCDAttached=True
+                LCDAttached=True
             retval = p.wait()
 
-        if (self.LCDAttached == True):
+        if (LCDAttached == True):
             logging.info('LCD attached')
         else:
             logging.info('LCD NOT attached')
 
-        return self.LCDAttached
+        return LCDAttached
 
     def getModel(self):
         model = "undef" 
