@@ -33,6 +33,7 @@ INIT_CONFIG = 10
 INIT_SHOT = 0
 SLEEP_TIME = 1
 LCD_CHAR_LINE_SIZE = 17
+LOG_FILENAME = 'timelapse.log'
 
 # Canon camera shutter settings
 CONFIGS = [(48, "1/1600", 2, 100),
@@ -90,7 +91,7 @@ class App(Adafruit_CharLCDPlate):
         self.idy = Identify(subprocess)
         self.netinfo = NetworkInfo(subprocess)
         self.shot = 0
-
+        
         self.displaySet = False
 
     def startup(self):
@@ -101,7 +102,11 @@ class App(Adafruit_CharLCDPlate):
         logging.info('Started %s' % __file__)
         logging.info("Timelapse Version %s"%__version__)
         if (self.LCDAttached == True):
-          self.message("Timelapse\nVersion %s"%__version__)
+            self.message("Timelapse\nVersion %s"%__version__)
+            logging.info('LCD attached')
+        else:
+            logging.info('LCD NOT attached')
+
         time.sleep(SLEEP_TIME)
 
         self.getNetwork()
@@ -224,12 +229,6 @@ class App(Adafruit_CharLCDPlate):
             if line[0:6] == "20: 20":
                 LCDAttached=True
             retval = p.wait()
-
-        if (LCDAttached == True):
-            logging.info('LCD attached')
-        else:
-            logging.info('LCD NOT attached')
-
         return LCDAttached
 
     def getModel(self):
