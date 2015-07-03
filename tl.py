@@ -1,5 +1,5 @@
 #!/usr/bin/python
-    
+
 from datetime import datetime
 from datetime import timedelta
 import time
@@ -20,9 +20,6 @@ from config_persist import Persist
 import subprocess
 import logging
 
-from Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
-from lcdScroll import Scroller
-
 __version__ = "1.0"
 MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=30)
 MIN_BRIGHTNESS = 20000
@@ -32,7 +29,6 @@ SETTINGS_FILE = "settings.cfg"
 INIT_CONFIG = 10
 INIT_SHOT = 0
 SLEEP_TIME = 1
-LCD_CHAR_LINE_SIZE = 17
 LOG_FILENAME = 'timelapse.log'
 
 # Canon camera shutter settings
@@ -79,33 +75,20 @@ CONFIGS = [(48, "1/1600", 2, 100),
 
 
 
-class App(Adafruit_CharLCDPlate):
+class App():
 
     def __init__(self):
-        self.LCDAttached = self.checkPanel()
-        # Initialize the LCD using the pins
-        # see https://learn.adafruit.com/adafruit-16x2-character-lcd-plus-keypad-for-raspberry-pi/usage
-        if (self.LCDAttached == True):
-          Adafruit_CharLCDPlate.__init__(self)
         self.camera = GPhoto(subprocess)
         self.idy = Identify(subprocess)
         self.netinfo = NetworkInfo(subprocess)
         self.shot = 0
-        
+
         self.displaySet = False
 
     def startup(self):
-        if (self.LCDAttached == True):
-          self.clear()
-          self.backlight(self.WHITE)
         logging.basicConfig(filename='%s/timelapse.log' % os.path.dirname(os.path.realpath(__file__)), level=logging.INFO, format='%(asctime)s %(message)s')
         logging.info('Started %s' % __file__)
         logging.info("Timelapse Version %s"%__version__)
-        if (self.LCDAttached == True):
-            self.message("Timelapse\nVersion %s"%__version__)
-            logging.info('LCD attached')
-        else:
-            logging.info('LCD NOT attached')
 
         time.sleep(SLEEP_TIME)
 
@@ -119,88 +102,24 @@ class App(Adafruit_CharLCDPlate):
 
     def showConfig(self, current):
         config = CONFIGS[current]
-        self.message("Timelapse\nT:%s ISO:%d" % (config[1], int(config[3])))
+        logging.info("Timelapse\nT:%s ISO:%d" % (config[1], int(config[3])))
 
     def showStatus(self, shot, current):
         config = CONFIGS[current]
-        self.clear()
-        self.message("Shot %d\nT:%s ISO:%d" % (shot, config[1], int(config[3])))
-
-    def printToLcd(self, message):
-        self.message('\n'.join(textwrap.wrap(message, LCD_CHAR_LINE_SIZE)))
+        logging.info("Shot %d\nT:%s ISO:%d" % (shot, config[1], int(config[3])))
 
     def getNetwork(self):
         network_status = self.netinfo.network_status()
-        if (self.LCDAttached == True):
-            self.backlight(self.TEAL)
-            self.clear()
-            self.message(network_status)
-            time.sleep(SLEEP_TIME)
         logging.info(network_status)
 
     def stop(self, mode):
-        self.clear()
         logging.info("Goodbye!")
-        self.message("Goodbye!")
-        # flashy ending!
-        for i in range(3):
-            for col in (self.YELLOW, self.GREEN, self.TEAL, self.BLUE, self.VIOLET, self.WHITE, self.RED):
-                self.backlight(col)
-                time.sleep(.05)
-        time.sleep(SLEEP_TIME)
-        self.backlight(self.OFF)
-        self.noDisplay()
-        logging.info("Display off")
         if mode == "exit":
             logging.info("End")
             sys.exit()
         if mode == "shutdown":
             logging.info("Shutown")
             os.system("sudo shutdown -h now")
-
-    def cleanUp(self, e):
-        logging.error(str(e))
-        self.backlight(self.RED) 
-        self.clear()
-        lines=[str(e)]
-        displayScroll = Scroller(lines=lines)
-        message = displayScroll.scroll()
-        self.message(message)
-        self.speed = .5
-        while True:
-            # sel = 1, r = 2, d = 4, u = 8, l = 16
-            if self.buttonPressed(self.UP): 
-                self.stop('exit')
-            self.clear()
-            scrolled = displayScroll.scroll()
-            self.message(scrolled)
-            time.sleep(self.speed)
-        raise Exception(str(e))
-
-    def chooseSetting(self, configs, current):
-        ready = False
-        while not ready:
-            while True:
-                if self.buttonPressed(self.UP):
-                    print "UP"
-                    current -= 1
-                if current < 0:
-                    current = 0
-                    break
-                if self.buttonPressed(self.DOWN):
-                    print "DOWN"
-                    current += 1
-                if current >= len(configs):
-                    current = len(configs) - 1
-                    break
-                if self.buttonPressed(self.SELECT):
-                    print "SELECT"
-                    ready = True
-                    break
-            config = configs[current]
-            logging.info("Settings done")
-            self.printToLcd("Timelapse\nT: %s ISO: %s" % (config[1], config[3]))
-        return current
 
     def testConfigs():
         print "Testing Configs"
@@ -211,38 +130,17 @@ class App(Adafruit_CharLCDPlate):
             camera.set_shutter_speed(secs=config[1])
             camera.set_iso(iso=str(config[3]))
             time.sleep(SLEEP_TIME)
-            lcd = Adafruit_CharLCDPlate()
-            lcd.clear()
-            lcd.backlight(lcd.TEAL)
 
     def main():
         test_configs()
 
-
-    def checkPanel(self):
-
-        LCDAttached = False
-        # Check if the LCD panel is connected
-        # sudo apt-get install i2c-tools
-        p = subprocess.Popen('sudo i2cdetect -y 1', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        for line in p.stdout.readlines():
-            if line[0:6] == "20: 20":
-                LCDAttached=True
-            retval = p.wait()
-        return LCDAttached
-
     def getModel(self):
-        model = "undef" 
+        model = "undef"
         try:
             model = self.camera.get_model()
         except Exception, e:
-            if (self.LCDAttached == True):
-                self.cleanUp(e)
-            else:
-                raise Exception(str(e))
+            raise Exception(str(e))
 
-        self.clear()
-        self.message(model)
         logging.info(model)
         time.sleep(SLEEP_TIME)
 
@@ -250,78 +148,33 @@ class App(Adafruit_CharLCDPlate):
         persist = Persist()
         settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, SETTINGS_FILE)
         current_config = settings["lastConfig"]
-        self.shot = settings["lastShot"] + 1 
-
-        if (self.LCDAttached == True):
-            self.clear()
+        self.shot = settings["lastShot"] + 1
 
         if (os.path.exists(IMAGE_DIRECTORY) or self.shot != 1) :
-            if (self.LCDAttached == True):
-                self.printToLcd("Wanna continue shooting?")
-                while True:
-                    if self.buttonPressed(self.UP):
-                        quest = "y"
-                        break
-                    elif self.buttonPressed(self.DOWN):
-                        quest = "n"
-                        break
-            else:
-                quest = raw_input("Wanna continue shooting? (y/n): ")
+            quest = raw_input("Wanna continue shooting? (y/n): ")
 
             if quest=="n":
                 logging.info('NOT continue shooting')
                 current_config = INIT_CONFIG
                 self.shot = INIT_SHOT+1
 
-                if (self.LCDAttached == True):
-                    self.clear()
-                    self.printToLcd("Starting new shooting")
-                    logging.info('Starting new shooting')
-                    time.sleep(SLEEP_TIME)         
-                    self.clear()
-                    self.printToLcd("Wanna delete all files?")
-                    while True:
-                        if self.buttonPressed(self.UP):
-                            delete = "y"
-                            break
-                        elif self.buttonPressed(self.DOWN):
-                            delete = "n"
-                            break
-                else:
-                    logging.info('Starting new shooting!')
-                    delete = raw_input("Delete settings and all images in folder %s ? (y/n): " % (IMAGE_DIRECTORY))
+                logging.info('Starting new shooting!')
+                delete = raw_input("Delete settings and all images in folder %s ? (y/n): " % (IMAGE_DIRECTORY))
 
                 if delete=="y":
                     if os.path.exists(IMAGE_DIRECTORY):
                         shutil.rmtree(IMAGE_DIRECTORY)
                     if os.path.exists(SETTINGS_FILE):
                         os.remove(SETTINGS_FILE)
-                    if (LCDAttached == True):
-                        self.printToLcd('Deleted successfully')
-                        logging.info('Deleted successfully')
-                    else:
-                        logging.info('Deleted successfully')
+                    logging.info('Deleted successfully')
                 elif delete=="n":
                     logging.info("Saving in folder: %s " % (IMAGE_DIRECTORY))
-                    if (self.LCDAttached == True):
-                        self.clear()
-                        self.printToLcd("Saving in folder: %s " % (IMAGE_DIRECTORY))
-                        time.sleep(SLEEP_TIME)
-                        self.clear()
-                    else:
-                        print "Saving in folder: %s " % (IMAGE_DIRECTORY)
+                    print "Saving in folder: %s " % (IMAGE_DIRECTORY)
                 else:
                     raise Exception("Input failure, exiting!")
             elif quest=="y":
-                if (self.LCDAttached == True):
-                    self.clear()
-                    self.printToLcd("Continue with shot %s" % (self.shot))
-                    logging.info('Continue shooting with shot %s' % (self.shot))
-                    time.sleep(SLEEP_TIME)
-                    self.clear()
-                else:
-                    logging.info('Continue shooting with shot %s' % (self.shot))
-                    print "Continue shooting with shot %s" % (self.shot)
+                logging.info('Continue shooting with shot %s' % (self.shot))
+                print "Continue shooting with shot %s" % (self.shot)
             else:
                 raise Exception("Input failure, exiting!")
 
@@ -329,26 +182,17 @@ class App(Adafruit_CharLCDPlate):
         last_acquired = None
         last_started = None
 
-        if (self.LCDAttached == True):
-            config = CONFIGS[current_config]
-            logging.info("Inital setting: T: %s ISO: %d" % (config[1], config[3]))
-            self.message("Timelapse\nT:%s ISO:%d" % (config[1], config[3]))
-            current_config = self.chooseSetting(CONFIGS, current_config)
         try:
             while True:
                 last_started = datetime.now()
                 config = CONFIGS[current_config]
                 logging.info("Shot: %d T: %s ISO: %d" % (self.shot, config[1], config[3]))
-                if (self.LCDAttached == True):
-                    self.showStatus(self.shot, current_config)
-                else:
-                    print "Shot: %d T: %s ISO: %d" % (self.shot, config[1], config[3])
+                print "Shot: %d T: %s ISO: %d" % (self.shot, config[1], config[3])
                 try:
                     self.camera.set_shutter_speed(config[1])
                     self.camera.set_iso(iso=str(config[3]))
                 except Exception, e:
-                    if (self.LCDAttached == True):
-                        self.cleanUp(e)
+                    logging.info("Error setting configs")
                 try:
                     filename = self.camera.capture_image_and_download(shot=self.shot, image_directory=IMAGE_DIRECTORY)
                 except Exception, e:
@@ -381,12 +225,7 @@ class App(Adafruit_CharLCDPlate):
             print "Error: %s" %(str(e))
 
         def exit_handler():
-            if (self.LCDAttached == True):
-                self.backlight(self.RED) 
-                self.clear()
-                self.message('Shooting aborted!')
-            else:
-                print 'Shooting aborted!'
+            print 'Shooting aborted!'
 
         # https://docs.python.org/2/library/atexit.html
         atexit.register(exit_handler)
