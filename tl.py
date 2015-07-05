@@ -20,7 +20,7 @@ import logging
 import signal
 
 __version__ = "1.0"
-MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=30)
+MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=600)
 MIN_BRIGHTNESS = 20000
 MAX_BRIGHTNESS = 30000
 IMAGE_DIRECTORY = "DCIM/"
