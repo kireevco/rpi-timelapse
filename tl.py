@@ -3,13 +3,11 @@
 from datetime import datetime
 from datetime import timedelta
 import time
-import subprocess
-import time
 import atexit
 import os
 import sys
 import shutil
-import textwrap
+import RPi.GPIO as GPIO
 
 from wrappers import GPhoto
 from wrappers import Identify
@@ -19,6 +17,7 @@ from config_persist import Persist
 
 import subprocess
 import logging
+import signal
 
 __version__ = "1.0"
 MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=30)
@@ -30,6 +29,10 @@ INIT_CONFIG = 10
 INIT_SHOT = 0
 SLEEP_TIME = 1
 LOG_FILENAME = 'timelapse.log'
+
+outPin = 21
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(outPin, GPIO.OUT)
 
 # Canon camera shutter settings
 CONFIGS = [(48, "1/1600", 2, 100),
@@ -85,6 +88,12 @@ class App():
 
         self.displaySet = False
 
+    def signal_handler(signal, frame):
+        print('You pressed Ctrl+C!')
+        GPIO.cleanup()
+        sys.exit(0)
+    signal.signal(signal.SIGINT, signal_handler)
+
     def startup(self):
         logging.basicConfig(filename='%s/timelapse.log' % os.path.dirname(os.path.realpath(__file__)), level=logging.INFO, format='%(asctime)s %(message)s')
         logging.info('Started %s' % __file__)
@@ -112,6 +121,18 @@ class App():
         network_status = self.netinfo.network_status()
         logging.info(network_status)
 
+    def handleLight(self, enabled):
+        if (enabled):
+            GPIO.output(outPin,True)
+        else:
+            GPIO.output(outPin,False)
+
+    def turnLightOn(self):
+        self.handleLight(True)
+
+    def turnLightOff(self):
+        self.handleLight(False)
+
     def stop(self, mode):
         logging.info("Goodbye!")
         if mode == "exit":
@@ -121,18 +142,18 @@ class App():
             logging.info("Shutown")
             os.system("sudo shutdown -h now")
 
-    def testConfigs():
-        print "Testing Configs"
+    def testConfigs(self):
+        print("Testing Configs")
         camera = GPhoto(subprocess)
 
         for config in CONFIGS:
-            print "Testing camera setting: Shutter: %s ISO %d" % (config[1], config[3])
+            print("Testing camera setting: Shutter: %s ISO %d" % (config[1], config[3]))
             camera.set_shutter_speed(secs=config[1])
             camera.set_iso(iso=str(config[3]))
             time.sleep(SLEEP_TIME)
 
-    def main():
-        test_configs()
+    def main(self):
+        self.testConfigs()
 
     def getModel(self):
         model = "undef"
@@ -194,7 +215,9 @@ class App():
                 except Exception, e:
                     logging.info("Error setting configs")
                 try:
+                    self.turnLightOn()
                     filename = self.camera.capture_image_and_download(shot=self.shot, image_directory=IMAGE_DIRECTORY)
+                    self.turnLightOff()
                 except Exception, e:
                     logging.error("Error on capture." + str(e))
                     print "Error on capture." + str(e)
