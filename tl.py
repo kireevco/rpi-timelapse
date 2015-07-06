@@ -23,7 +23,7 @@ __version__ = "1.0"
 MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=600)
 MIN_BRIGHTNESS = 20000
 MAX_BRIGHTNESS = 30000
-IMAGE_DIRECTORY = "/var/lib/timelapse/DCIM/"
+IMAGE_DIRECTORY = "/var/lib/timelapse/img/"
 SETTINGS_FILE = "/var/lib/timelapse/settings.cfg"
 INIT_CONFIG = 10
 INIT_SHOT = 0
@@ -170,34 +170,6 @@ class App():
         settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, SETTINGS_FILE)
         current_config = settings["lastConfig"]
         self.shot = settings["lastShot"] + 1
-
-        if (os.path.exists(IMAGE_DIRECTORY) or self.shot != 1) :
-            quest = raw_input("Wanna continue shooting? (y/n): ")
-
-            if quest=="n":
-                logging.info('NOT continue shooting')
-                current_config = INIT_CONFIG
-                self.shot = INIT_SHOT+1
-
-                logging.info('Starting new shooting!')
-                delete = raw_input("Delete settings and all images in folder %s ? (y/n): " % (IMAGE_DIRECTORY))
-
-                if delete=="y":
-                    if os.path.exists(IMAGE_DIRECTORY):
-                        shutil.rmtree(IMAGE_DIRECTORY)
-                    if os.path.exists(SETTINGS_FILE):
-                        os.remove(SETTINGS_FILE)
-                    logging.info('Deleted successfully')
-                elif delete=="n":
-                    logging.info("Saving in folder: %s " % (IMAGE_DIRECTORY))
-                    print "Saving in folder: %s " % (IMAGE_DIRECTORY)
-                else:
-                    raise Exception("Input failure, exiting!")
-            elif quest=="y":
-                logging.info('Continue shooting with shot %s' % (self.shot))
-                print "Continue shooting with shot %s" % (self.shot)
-            else:
-                raise Exception("Input failure, exiting!")
 
         prev_acquired = None
         last_acquired = None
