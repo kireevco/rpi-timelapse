@@ -95,7 +95,7 @@ class App():
     signal.signal(signal.SIGINT, signal_handler)
 
     def startup(self):
-        logging.basicConfig(filename='/var/log/timelapse.log' % os.path.dirname(os.path.realpath(__file__)), level=logging.INFO, format='%(asctime)s %(message)s')
+        logging.basicConfig(filename='/var/log/timelapse.log', level=logging.INFO, format='%(asctime)s %(message)s')
         logging.info('Started %s' % __file__)
         logging.info("Timelapse Version %s"%__version__)
 
