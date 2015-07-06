@@ -23,12 +23,12 @@ __version__ = "1.0"
 MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=600)
 MIN_BRIGHTNESS = 20000
 MAX_BRIGHTNESS = 30000
-IMAGE_DIRECTORY = "DCIM/"
-SETTINGS_FILE = "settings.cfg"
+IMAGE_DIRECTORY = "/var/lib/timelapse/DCIM/"
+SETTINGS_FILE = "/var/lib/timelapse/settings.cfg"
 INIT_CONFIG = 10
 INIT_SHOT = 0
 SLEEP_TIME = 1
-LOG_FILENAME = 'timelapse.log'
+LOG_FILENAME = '/var/log/timelapse.log'
 
 outPin = 21
 GPIO.setmode(GPIO.BCM)
@@ -95,7 +95,7 @@ class App():
     signal.signal(signal.SIGINT, signal_handler)
 
     def startup(self):
-        logging.basicConfig(filename='/var/log/timelapse.log', level=logging.INFO, format='%(asctime)s %(message)s')
+        logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO, format='%(asctime)s %(message)s')
         logging.info('Started %s' % __file__)
         logging.info("Timelapse Version %s"%__version__)
 
