@@ -21,11 +21,11 @@ import signal
 
 __version__ = "1.0"
 MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=600)
-MIN_BRIGHTNESS = 20000
-MAX_BRIGHTNESS = 30000
+MIN_BRIGHTNESS = 17000
+MAX_BRIGHTNESS = 24000
 IMAGE_DIRECTORY = "/var/lib/timelapse/img/"
 SETTINGS_FILE = "/var/lib/timelapse/settings.cfg"
-INIT_CONFIG = 10
+INIT_CONFIG = 26
 INIT_SHOT = 0
 SLEEP_TIME = 1
 LOG_FILENAME = '/var/log/timelapse.log'
