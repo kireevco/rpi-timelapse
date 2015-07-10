@@ -20,12 +20,12 @@ import logging
 import signal
 
 __version__ = "1.0"
-MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=600)
+MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=60)
 MIN_BRIGHTNESS = 17000
 MAX_BRIGHTNESS = 24000
 IMAGE_DIRECTORY = "/var/lib/timelapse/img/"
 SETTINGS_FILE = "/var/lib/timelapse/settings.cfg"
-INIT_CONFIG = 26
+INIT_CONFIG = 20
 INIT_SHOT = 0
 SLEEP_TIME = 1
 LOG_FILENAME = '/var/log/timelapse.log'
@@ -199,15 +199,14 @@ class App():
                 prev_acquired = last_acquired
                 brightness = float(self.idy.mean_brightness(IMAGE_DIRECTORY+filename))
                 last_acquired = datetime.now()
+                persist.writeLastConfig(current_config, self.shot, brightness, SETTINGS_FILE)
 
                 logging.info("Shot: %d File: %s Brightness: %s" % (self.shot, filename, brightness))
 
                 if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1:
                     current_config = current_config + 1
-                    persist.writeLastConfig(current_config, self.shot, brightness, SETTINGS_FILE)
                 elif brightness > MAX_BRIGHTNESS and current_config > 0:
                     current_config = current_config - 1
-                    persist.writeLastConfig(current_config, self.shot, brightness, SETTINGS_FILE)
                 else:
                     if last_started and last_acquired and last_acquired - last_started < MIN_INTER_SHOT_DELAY_SECONDS:
                         logging.info("Sleeping for %s" % str(MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started)))
