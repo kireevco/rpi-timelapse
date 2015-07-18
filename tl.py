@@ -28,6 +28,7 @@ SETTINGS_FILE = "/var/lib/timelapse/settings.cfg"
 INIT_CONFIG = 20
 INIT_SHOT = 0
 SLEEP_TIME = 1
+FLASH_THRESHOLD = 19
 LOG_FILENAME = '/var/log/timelapse.log'
 
 outPin = 21
@@ -175,6 +176,8 @@ class App():
         last_acquired = None
         last_started = None
 
+        flash_on = None
+
         try:
             while True:
                 last_started = datetime.now()
@@ -203,9 +206,19 @@ class App():
 
                 logging.info("Shot: %d File: %s Brightness: %s" % (self.shot, filename, brightness))
 
-                if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1:
+                if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1 and flash_on == True:
                     current_config = current_config + 1
-                elif brightness > MAX_BRIGHTNESS and current_config > 0:
+                elif brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1 and flash_on == False:
+                    if (current_config > FLASH_THRESHOLD):
+                        flash_on = True
+                        current_config = current_config - 1
+                    else: current_config = current_config + 1
+                elif brightness > MAX_BRIGHTNESS and current_config > 0 and flash_on == False:
+                    current_config = current_config - 1
+                elif brightness > MAX_BRIGHTNESS and current_config > 0 and flash_on == True:
+                    if (current_config <= FLASH_THRESHOLD):
+                        flash_on = False
+                        current_config = current_config + 1
                     current_config = current_config - 1
                 else:
                     if last_started and last_acquired and last_acquired - last_started < MIN_INTER_SHOT_DELAY_SECONDS:
