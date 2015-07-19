@@ -171,6 +171,7 @@ class App():
 
         try:
             settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, SETTINGS_FILE)
+            logging.info("Settings: " +str(settings))
             current_config = settings["lastConfig"]
             flash_on = settings["flashOn"]
             self.shot = settings["lastShot"] + 1
@@ -190,9 +191,11 @@ class App():
                 except Exception, e:
                     logging.info("Error setting configs")
                 try:
-                    self.turnLightOn()
+                    if flash_on == True:
+                        self.turnLightOn()
                     filename = self.camera.capture_image_and_download(shot=self.shot, image_directory=IMAGE_DIRECTORY)
-                    self.turnLightOff()
+                    if flash_on == True:
+                        self.turnLightOff()
                 except Exception, e:
                     logging.error("Error on capture." + str(e))
                     print "Error on capture." + str(e)
