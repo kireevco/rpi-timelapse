@@ -219,12 +219,12 @@ class App():
                         flash_on = False
                     else: current_config = current_config - 1
                 else:
+                    self.shot += 1
                     if last_started and last_acquired and last_acquired - last_started < MIN_INTER_SHOT_DELAY_SECONDS:
                         logging.info("Sleeping for %s" % str(MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started)))
                         print "Sleeping for %s" % str(MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started))
 
                         time.sleep((MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started)).seconds)
-                self.shot += 1
         except Exception,e:
             logging.error("Error: %s" %(str(e)))
             print "Error: %s" %(str(e))
