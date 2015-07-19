@@ -210,11 +210,11 @@ class App():
 
                 logging.info("Shot: %d File: %s Brightness: %s Flash: %s" % (self.shot, filename, brightness, flash_on))
 
-                if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1 and flash_on == True:
+                if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1:
                     if (flash_on == False and current_config >= FLASH_THRESHOLD):
                         flash_on = True
                     else: current_config = current_config + 1
-                elif brightness > MAX_BRIGHTNESS and current_config > 0 and flash_on == False:
+                elif brightness > MAX_BRIGHTNESS and current_config > 0:
                     if (flash_on == True and current_config < FLASH_THRESHOLD):
                         flash_on = False
                     else: current_config = current_config - 1
