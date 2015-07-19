@@ -168,16 +168,17 @@ class App():
 
     def shoot(self):
         persist = Persist()
-        settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, SETTINGS_FILE)
-        current_config = settings["lastConfig"]
-        flash_on = settings["flashOn"]
-        self.shot = settings["lastShot"] + 1
-
-        prev_acquired = None
-        last_acquired = None
-        last_started = None
 
         try:
+            settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, SETTINGS_FILE)
+            current_config = settings["lastConfig"]
+            flash_on = settings["flashOn"]
+            self.shot = settings["lastShot"] + 1
+
+            prev_acquired = None
+            last_acquired = None
+            last_started = None
+
             while True:
                 last_started = datetime.now()
                 config = CONFIGS[current_config]
