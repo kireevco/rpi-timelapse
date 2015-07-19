@@ -170,13 +170,12 @@ class App():
         persist = Persist()
         settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, SETTINGS_FILE)
         current_config = settings["lastConfig"]
+        flash_on = settings["flashOn"]
         self.shot = settings["lastShot"] + 1
 
         prev_acquired = None
         last_acquired = None
         last_started = None
-
-        flash_on = None
 
         try:
             while True:
@@ -202,24 +201,18 @@ class App():
                 prev_acquired = last_acquired
                 brightness = float(self.idy.mean_brightness(IMAGE_DIRECTORY+filename))
                 last_acquired = datetime.now()
-                persist.writeLastConfig(current_config, self.shot, brightness, SETTINGS_FILE)
+                persist.writeLastConfig(current_config, self.shot, brightness, SETTINGS_FILE, flash_on)
 
-                logging.info("Shot: %d File: %s Brightness: %s" % (self.shot, filename, brightness))
+                logging.info("Shot: %d File: %s Brightness: %s Flash: %s" % (self.shot, filename, brightness, flash_on))
 
                 if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1 and flash_on == True:
-                    current_config = current_config + 1
-                elif brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1 and flash_on == False:
-                    if (current_config > FLASH_THRESHOLD):
+                    if (flash_on == False and current_config >= FLASH_THRESHOLD):
                         flash_on = True
-                        current_config = current_config - 1
                     else: current_config = current_config + 1
                 elif brightness > MAX_BRIGHTNESS and current_config > 0 and flash_on == False:
-                    current_config = current_config - 1
-                elif brightness > MAX_BRIGHTNESS and current_config > 0 and flash_on == True:
-                    if (current_config <= FLASH_THRESHOLD):
+                    if (flash_on == True and current_config < FLASH_THRESHOLD):
                         flash_on = False
-                        current_config = current_config + 1
-                    current_config = current_config - 1
+                    else: current_config = current_config - 1
                 else:
                     if last_started and last_acquired and last_acquired - last_started < MIN_INTER_SHOT_DELAY_SECONDS:
                         logging.info("Sleeping for %s" % str(MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started)))

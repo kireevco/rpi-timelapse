@@ -2,10 +2,11 @@ import os
 import json
 
 class Settings:
-    def __init__(self,lastConfig,lastShot,brightness):
+    def __init__(self,lastConfig,lastShot,brightness,flashOn):
         self.lastConfig=lastConfig
         self.lastShot=lastShot
         self.lastBrightness=brightness
+        self.flashOn=flashOn
 
 
 class Persist():
@@ -32,10 +33,10 @@ class Persist():
             return settings
    
     @staticmethod
-    def writeLastConfig(lastConfig, initShot, brightness, filename):
+    def writeLastConfig(lastConfig, initShot, brightness, filename, flashOn):
         with Persist.touchopen(filename, "r+") as target:
            
-            settings=Settings(lastConfig, initShot, brightness)
+            settings=Settings(lastConfig, initShot, brightness, flashOn)
             json.dump(vars(settings), target, sort_keys=True, indent=4)
             #json.dump('settings': [{'lastConfig': lastConfig, 'lastShot': initShot]}, target, sort_keys=True, indent=4)
             # Write the new value and truncate
