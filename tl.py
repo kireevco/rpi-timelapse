@@ -27,6 +27,7 @@ IMAGE_DIRECTORY = "/var/lib/timelapse/img/"
 SETTINGS_FILE = "/var/lib/timelapse/settings.cfg"
 INIT_CONFIG = 20
 INIT_SHOT = 0
+INIT_FLASH = False
 SLEEP_TIME = 1
 FLASH_THRESHOLD = 19
 LOG_FILENAME = '/var/log/timelapse.log'
@@ -170,7 +171,7 @@ class App():
         persist = Persist()
 
         try:
-            settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, SETTINGS_FILE)
+            settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, INIT_FLASH, SETTINGS_FILE)
             logging.info("Settings: " +str(settings))
             current_config = settings["lastConfig"]
             flash_on = settings["flashOn"]

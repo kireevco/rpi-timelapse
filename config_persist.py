@@ -21,14 +21,15 @@ class Persist():
         return os.fdopen(fd, *args, **kwargs)
    
     @staticmethod
-    def readLastConfig(initConfig, initShot, filename):
+    def readLastConfig(initConfig, initShot, initFlash, filename):
         with Persist.touchopen(filename, "r+") as target:
             try:
                 settings = json.load(target)
             except ValueError:
                 settings = {
                   "lastConfig": initConfig,
-                  "lastShot":   initShot
+                  "lastShot":   initShot,
+                  "flashOn": initFlash
                 }
             return settings
    
