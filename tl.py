@@ -21,8 +21,8 @@ import signal
 
 __version__ = "1.0"
 MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=600)
-MIN_BRIGHTNESS = 15000
-MAX_BRIGHTNESS = 22000
+MIN_BRIGHTNESS = 14000
+MAX_BRIGHTNESS = 17000
 IMAGE_DIRECTORY = "/var/lib/timelapse/img/"
 SETTINGS_FILE = "/var/lib/timelapse/settings.cfg"
 INIT_CONFIG = 20
@@ -182,6 +182,7 @@ class App():
             last_started = None
 
             while True:
+                beenOver = False
                 last_started = datetime.now()
                 config = CONFIGS[current_config]
                 logging.info("Shot: %d T: %s ISO: %d" % (self.shot, config[1], config[3]))
@@ -210,11 +211,12 @@ class App():
 
                 logging.info("Shot: %d File: %s Brightness: %s Flash: %s" % (self.shot, filename, brightness, flash_on))
 
-                if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1:
+                if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1 and beenOver == False:
                     if (flash_on == False and current_config >= FLASH_THRESHOLD):
                         flash_on = True
                     else: current_config = current_config + 1
                 elif brightness > MAX_BRIGHTNESS and current_config > 0:
+                    beenOver = True
                     if (flash_on == True and current_config < FLASH_THRESHOLD):
                         flash_on = False
                     else: current_config = current_config - 1
