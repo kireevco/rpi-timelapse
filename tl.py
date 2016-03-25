@@ -209,13 +209,15 @@ class App():
                 last_acquired = datetime.now()
                 persist.writeLastConfig(current_config, self.shot, brightness, SETTINGS_FILE, flash_on)
 
-                logging.info("Shot: %d File: %s Brightness: %s Flash: %s" % (self.shot, filename, brightness, flash_on))
+                logging.info("Shot: %d File: %s Brightness: %s Flash: %s Been Over: %s" % (self.shot, filename, brightness, flash_on, beenOver))
 
                 if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1 and beenOver == False:
+                    logging.info("Under not been over")
                     if (flash_on == False and current_config >= FLASH_THRESHOLD):
                         flash_on = True
                     else: current_config = current_config + 1
                 elif brightness > MAX_BRIGHTNESS and current_config > 0:
+                    logging.info("Over")
                     beenOver = True
                     if (flash_on == True and current_config < FLASH_THRESHOLD):
                         flash_on = False
