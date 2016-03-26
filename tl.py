@@ -21,9 +21,10 @@ import signal
 
 __version__ = "1.0"
 MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=600)
-MIN_BRIGHTNESS = 14000
+MIN_BRIGHTNESS = 12000
 MAX_BRIGHTNESS = 17000
 IMAGE_DIRECTORY = "/var/lib/timelapse/img/"
+TMP_DIRECTORY = "/tmp/"
 SETTINGS_FILE = "/var/lib/timelapse/settings.cfg"
 INIT_CONFIG = 20
 INIT_SHOT = 0
@@ -195,7 +196,7 @@ class App():
                 try:
                     if flash_on == True:
                         self.turnLightOn()
-                    filename = self.camera.capture_image_and_download(shot=self.shot, image_directory=IMAGE_DIRECTORY)
+                    filename = self.camera.capture_image_and_download(shot=self.shot, image_directory=TMP_DIRECTORY)
                     if flash_on == True:
                         self.turnLightOff()
                 except Exception, e:
@@ -205,7 +206,7 @@ class App():
                     # Occasionally, capture can fail but retries will be successful.
                     continue
                 prev_acquired = last_acquired
-                brightness = float(self.idy.mean_brightness(IMAGE_DIRECTORY+filename))
+                brightness = float(self.idy.mean_brightness(TMP_DIRECTORY+filename))
                 last_acquired = datetime.now()
                 persist.writeLastConfig(current_config, self.shot, brightness, SETTINGS_FILE, flash_on)
 
@@ -223,6 +224,7 @@ class App():
                         flash_on = False
                     else: current_config = current_config - 1
                 else:
+                    os.rename(TMP_DIRECTORY+filename, IMAGE_DIRECTORY+filename)
                     been_over = False
                     self.shot += 1
                     if last_started and last_acquired and last_acquired - last_started < MIN_INTER_SHOT_DELAY_SECONDS:
