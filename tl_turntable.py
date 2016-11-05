@@ -73,7 +73,9 @@ class App():
         self.testConfigs()
 
     def shoot(self):
-        self.turnLightOn();
+        self.turnLightOn()
+        time.sleep(1)
+        self.turnLightOff()
 
         def exit_handler():
             print 'Shooting aborted!'
