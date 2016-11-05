@@ -79,8 +79,9 @@ class App():
 
         def exit_handler():
             print 'Shooting aborted!'
+            GPIO.cleanup()
 
-        # https://docs.python.org/2/library/atexit.html
+            # https://docs.python.org/2/library/atexit.html
         atexit.register(exit_handler)
 
 if __name__ == "__main__":
