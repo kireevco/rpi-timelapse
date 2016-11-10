@@ -202,9 +202,11 @@ class App():
                     logging.info("Error setting configs")
                 try:
                     if flash_on == True:
+                        print "Flash on"
                         self.turnLightOn()
                     filename = self.camera.capture_image_and_download(shot=self.shot, image_directory=TMP_DIRECTORY)
                     if flash_on == True:
+                        print "Flash off"
                         self.turnLightOff()
                 except Exception, e:
                     logging.error("Error on capture." + str(e))
