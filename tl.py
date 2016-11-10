@@ -33,9 +33,11 @@ SLEEP_TIME = 1
 FLASH_THRESHOLD = 19
 LOG_FILENAME = '/var/log/timelapse.log'
 
-outPin = 21
+flashPin = 21
+turntablePin = 21
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(outPin, GPIO.OUT)
+GPIO.setup(flashPin, GPIO.OUT)
+GPIO.setup(turntablePin, GPIO.OUT)
 
 # Canon camera shutter settings
 CONFIGS = [(48, "1/1600", 2, 100),
@@ -126,15 +128,20 @@ class App():
 
     def handleLight(self, enabled):
         if (enabled):
-            GPIO.output(outPin,True)
+            GPIO.output(flashPin,True)
         else:
-            GPIO.output(outPin,False)
+            GPIO.output(flashPin,False)
 
     def turnLightOn(self):
         self.handleLight(True)
 
     def turnLightOff(self):
         self.handleLight(False)
+
+    def handleTurntable(self):
+        GPIO.output(turntablePin, True)
+        time.sleep(.5)
+        GPIO.output(turntablePin, False)
 
     def stop(self, mode):
         logging.info("Goodbye!")
@@ -230,7 +237,7 @@ class App():
                     if last_started and last_acquired and last_acquired - last_started < MIN_INTER_SHOT_DELAY_SECONDS:
                         logging.info("Sleeping for %s" % str(MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started)))
                         print "Sleeping for %s" % str(MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started))
-
+                        self.handleTurntable()
                         time.sleep((MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started)).seconds)
         except Exception,e:
             logging.error("Error: %s" %(str(e)))
