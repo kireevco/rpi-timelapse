@@ -33,7 +33,7 @@ SLEEP_TIME = 1
 FLASH_THRESHOLD = 19
 LOG_FILENAME = '/var/log/timelapse.log'
 
-flashPin = 21
+flashPin = 20
 turntablePin = 21
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(flashPin, GPIO.OUT)
