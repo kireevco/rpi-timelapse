@@ -20,7 +20,7 @@ import logging
 import signal
 
 __version__ = "1.0"
-MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=600)
+MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=30)
 MIN_BRIGHTNESS = 12000
 MAX_BRIGHTNESS = 17000
 IMAGE_DIRECTORY = "/var/lib/timelapse/img/"
