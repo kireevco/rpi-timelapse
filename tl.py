@@ -182,7 +182,7 @@ class App():
             settings = persist.readLastConfig(INIT_CONFIG, INIT_SHOT, INIT_FLASH, SETTINGS_FILE)
             logging.info("Settings: " +str(settings))
             current_config = settings["lastConfig"]
-            flash_on = settings["flashOn"]
+            flash_on = True
             self.shot = settings["lastShot"] + 1
 
             prev_acquired = None
@@ -223,15 +223,11 @@ class App():
 
                 if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1 and been_over == False:
                     logging.info("Under not been over")
-                    if (flash_on == False and current_config >= FLASH_THRESHOLD):
-                        flash_on = True
-                    else: current_config = current_config + 1
+                    current_config = current_config + 1
                 elif brightness > MAX_BRIGHTNESS and current_config > 0:
                     logging.info("Over")
                     been_over = True
-                    if (flash_on == True and current_config < FLASH_THRESHOLD):
-                        flash_on = False
-                    else: current_config = current_config - 1
+                    current_config = current_config - 1
                 else:
                     os.rename(TMP_DIRECTORY+filename, IMAGE_DIRECTORY+filename)
                     been_over = False
