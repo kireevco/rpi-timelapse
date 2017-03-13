@@ -23,9 +23,9 @@ __version__ = "1.0"
 MIN_INTER_SHOT_DELAY_SECONDS = timedelta(seconds=600)
 MIN_BRIGHTNESS = 12000
 MAX_BRIGHTNESS = 17000
-IMAGE_DIRECTORY = "/img/"
-TMP_DIRECTORY = "/tmp/"
-SETTINGS_FILE = "settings.cfg"
+IMAGE_DIRECTORY = os.path.join(os.getcwd(), "img")
+TMP_DIRECTORY = os.path.join(os.getcwd(), "tmp")
+SETTINGS_FILE = os.path.join(os.getcwd(), "settings.cfg")
 INIT_CONFIG = 20
 INIT_SHOT = 0
 INIT_FLASH = False
@@ -208,25 +208,35 @@ class App():
                     # Occasionally, capture can fail but retries will be successful.
                     continue
                 prev_acquired = last_acquired
-                brightness = float(self.idy.mean_brightness(TMP_DIRECTORY+filename))
+                brightness = float(self.idy.mean_brightness(os.path.join(TMP_DIRECTORY, filename)))
                 last_acquired = datetime.now()
                 persist.writeLastConfig(current_config, self.shot, brightness, SETTINGS_FILE, flash_on)
 
                 logging.info("Shot: %d File: %s Brightness: %s Flash: %s Been Over: %s" % (self.shot, filename, brightness, flash_on, been_over))
 
-                if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1 and been_over == False:
-                    logging.info("Under not been over")
-                    if (flash_on == False and current_config >= FLASH_THRESHOLD):
+                if brightness < MIN_BRIGHTNESS and current_config < len(CONFIGS) - 1 and not been_over:
+                    logging.info("Too Dark. (Not been over)")
+
+                    if not flash_on and current_config >= FLASH_THRESHOLD:
                         flash_on = True
-                    else: current_config = current_config + 1
+                    else:
+                        current_config += 1
+                        logging.info("Trying next config ({})".format(current_config))
+
                 elif brightness > MAX_BRIGHTNESS and current_config > 0:
-                    logging.info("Over")
+                    logging.info("Too Bright.")
                     been_over = True
-                    if (flash_on == True and current_config < FLASH_THRESHOLD):
+                    if flash_on and current_config < FLASH_THRESHOLD:
                         flash_on = False
-                    else: current_config = current_config - 1
+                    else:
+                        current_config -= 1
+                        logging.info("Trying previous config ({})".format(current_config))
                 else:
-                    os.rename(TMP_DIRECTORY+filename, IMAGE_DIRECTORY+filename)
+                    logging.info("Correct brightness - Found right config")
+                    if not os.path.exists(IMAGE_DIRECTORY):
+                        os.makedirs(IMAGE_DIRECTORY)
+
+                    os.rename(os.path.join(TMP_DIRECTORY, filename), os.path.join(IMAGE_DIRECTORY, filename))
                     been_over = False
                     self.shot += 1
                     if last_started and last_acquired and last_acquired - last_started < MIN_INTER_SHOT_DELAY_SECONDS:
@@ -234,7 +244,7 @@ class App():
                         print "Sleeping for %s" % str(MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started))
 
                         time.sleep((MIN_INTER_SHOT_DELAY_SECONDS - (last_acquired - last_started)).seconds)
-        except Exception,e:
+        except Exception, e:
             logging.error("Error: %s" %(str(e)))
             print "Error: %s" %(str(e))
 

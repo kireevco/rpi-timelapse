@@ -1,3 +1,7 @@
 *.pyc
 *.cfg
 *.log
+settings.cfg
+.idea
+tmp/
+img/

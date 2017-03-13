@@ -88,19 +88,18 @@ class GPhoto(Wrapper):
         stime = time.strptime(timestr, ": %Y-%m-%d %H:%M:%S")
         return stime
 
-
     def capture_image_and_download(self, shot=None, image_directory=None):
         code, out, err = self.call(self._CMD + " --capture-image-and-download --filename '%Y%m%d%H%M%S.JPG'")
         filename = None
         for line in out.split('\n'):
             if line.startswith('Saving file as '):
                 filename = line.split('Saving file as ')[1]
-                filenameWithCnt = "IMG_{:0>4d}.jpg".format(shot)
-                os.rename(filename, filenameWithCnt)
-                filename = filenameWithCnt
+                filename_with_cnt = "IMG_{:0>4d}.jpg".format(shot)
+                os.rename(filename, filename_with_cnt)
+                filename = filename_with_cnt
                 if not os.path.exists(image_directory):
-                  os.makedirs(image_directory)
-                os.rename(filename,image_directory+filename)
+                    os.makedirs(image_directory)
+                os.rename(filename, os.path.join(image_directory, filename))
         return filename
 
     def get_shutter_speeds(self):
